@@ -27,19 +27,21 @@ window with a mouse-click on the UIA-located Close button.
 
 Exit codes: `0` pass, `1` assertion failed, `2` runner error.
 
-## Layout
+## Using with Copilot CLI
 
-```
-ui-auto/
-├── install.ps1               # one-line bootstrap
-├── setup.ps1                 # local convenience (uv already installed)
-├── pyproject.toml            # uv-managed project metadata + deps
-├── uv.lock                   # exact pinned versions
-├── run_test.py               # declarative test runner
-├── scripts/                  # generic CLI primitives
-├── test_cases/               # declarative YAML scenarios
-└── docs/                     # reference docs (see below)
-```
+If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot)
+installed, you can drive the toolkit conversationally. Two example prompts:
+
+**Run an existing scenario:**
+> Run `test_cases/powershell_echo_loop.yaml` with `uv run python run_test.py`,
+> then summarize pass/fail per iteration and list the screenshot paths.
+
+**Author a new scenario:**
+> Create a new test case at `test_cases/notepad_save.yaml` that opens Notepad
+> from the Start menu, types `hello from copilot`, saves the file as
+> `%TEMP%\copilot_test.txt` via Ctrl+S, validates the file exists, and closes
+> Notepad with a mouse click on the Close button. Use UIA selectors and
+> follow the spec format in `docs/test-spec-format.md`.
 
 ## Documentation
 
