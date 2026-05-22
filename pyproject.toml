@@ -1,0 +1,15 @@
+[project]
+name = "ui-auto"
+version = "0.1.0"
+description = "Declarative UI-automation toolkit for Windows desktop apps (pyautogui + pywinauto)."
+requires-python = ">=3.10,<3.13"
+readme = "README.md"
+dependencies = [
+    "pyautogui>=0.9.54",
+    "pywinauto>=0.6.8",
+    "Pillow>=10.0.0",
+    "PyYAML>=6.0",
+]
+
+[tool.uv]
+package = false

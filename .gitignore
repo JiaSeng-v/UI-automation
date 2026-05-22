@@ -1,0 +1,13 @@
+# Python venv & caches
+.venv/
+__pycache__/
+*.pyc
+
+# Run artifacts
+screenshots/
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/

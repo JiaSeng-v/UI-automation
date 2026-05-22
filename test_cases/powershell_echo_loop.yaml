@@ -1,0 +1,162 @@
+# Test case: powershell_echo_loop
+# Declarative, reproducible UI-automation scenario.
+# A runner walks `steps` in order. Each step has a `type` and a `description`
+# explaining the *intent* so the result can be reproduced identically.
+
+name: powershell_echo_loop
+description: >
+  Open Windows PowerShell from the Start menu, echo four fixed strings,
+  validate each appears in the console via UIA, save a screenshot per
+  iteration, then close the window with a mouse click on the UIA-located
+  Close button.
+
+# Fixed inputs — do NOT randomize on re-run. Reproducibility requires
+# the same payloads every time.
+inputs:
+  echo_texts:
+    - "delta crimson 692"
+    - "velvet xenon 465"
+    - "echo lunar 333"
+    - "velvet river 683"
+
+# Where artifacts go. {timestamp} is substituted at run-start (UTC).
+artifacts:
+  screenshot_dir: "screenshots/{timestamp}"
+  screenshot_name: "iter_{n}.png"
+  fail_screenshot_name: "iter_{n}_FAIL.png"
+
+# Global timing/retry knobs. Documented so reruns are deterministic.
+timing:
+  after_win_key_ms: 700          # wait for Start menu animation
+  after_search_text_ms: 1200     # wait for top search result to resolve
+  after_launch_enter_ms: 2000    # wait for PowerShell window to appear
+  after_focus_click_ms: 200
+  after_type_ms: 150
+  after_enter_ms: 600            # wait for echo output to render
+  validate_poll_total_ms: 3000   # max time to wait for console match
+  validate_poll_interval_ms: 200
+  after_close_click_ms: 1000
+
+# Sequence of actions. Each step is a primitive script call OR an assertion.
+# `expect_exit: 0` is the default; non-zero must be declared.
+steps:
+
+  - id: launch_open_start
+    type: key
+    description: "Open Start menu via Win key."
+    script: scripts/key.py
+    args: ["win"]
+    wait_after: after_win_key_ms
+
+  - id: launch_search
+    type: type_text
+    description: "Type the search query 'powershell' into the Start menu."
+    script: scripts/type_text.py
+    args: ["powershell"]
+    wait_after: after_search_text_ms
+
+  - id: launch_confirm
+    type: key
+    description: "Press Enter to launch the top result (Windows PowerShell)."
+    script: scripts/key.py
+    args: ["enter"]
+    wait_after: after_launch_enter_ms
+
+  - id: locate_window
+    type: find_window
+    description: "Locate the PowerShell window by exact title. Stash hwnd in vars.hwnd."
+    script: scripts/find_window.py
+    args: ["^Windows PowerShell$"]
+    capture:
+      # Output is tab-separated: pid hwnd left top right bottom title
+      vars.hwnd: "$.cols[1]"
+      vars.win_left: "$.cols[2]"
+      vars.win_top: "$.cols[3]"
+      vars.win_right: "$.cols[4]"
+      vars.win_bottom: "$.cols[5]"
+
+  - id: focus_window
+    type: click
+    description: >
+      Click near the upper-left interior of the PowerShell window to ensure
+      it has keyboard focus before typing. Uses captured window rect, not
+      hard-coded coords, for portability.
+    script: scripts/click.py
+    args_expr: ["{vars.win_left + 100}", "{vars.win_top + 60}"]
+    wait_after: after_focus_click_ms
+
+  # Loop: for each text in inputs.echo_texts, repeat this block.
+  - id: echo_loop
+    type: foreach
+    description: "Echo, validate, screenshot — once per input text."
+    items: inputs.echo_texts
+    var: text
+    index_var: n          # 1-based index
+    body:
+
+      - id: type_echo_cmd
+        type: type_text
+        description: "Type the echo command with quoted payload."
+        script: scripts/type_text.py
+        args_expr: ['echo "{text}"']
+        wait_after: after_type_ms
+
+      - id: submit_cmd
+        type: key
+        description: "Submit the command."
+        script: scripts/key.py
+        args: ["enter"]
+        wait_after: after_enter_ms
+
+      - id: validate_console
+        type: assert_console_contains
+        description: >
+          Read the PowerShell console via UIA and assert the echoed text
+          appears. Poll up to timing.validate_poll_total_ms.
+        script: scripts/read_console.py
+        args_expr: ["{vars.hwnd}"]
+        expected_contains_expr: "{text}"
+        poll_total_ms: validate_poll_total_ms
+        poll_interval_ms: validate_poll_interval_ms
+
+      - id: snapshot
+        type: screenshot
+        description: "Save iter_{n}.png on pass, iter_{n}_FAIL.png on prior failure."
+        script: scripts/screenshot.py
+        args_expr_on_pass: ["{artifacts.screenshot_dir}/iter_{n}.png"]
+        args_expr_on_fail: ["{artifacts.screenshot_dir}/iter_{n}_FAIL.png"]
+
+  - id: locate_close_button
+    type: find_control
+    description: >
+      Use UIA to locate the Close button inside the PowerShell window.
+      This is generic — same script handles Minimize/Maximize/etc. with
+      different flags.
+    script: scripts/find_control.py
+    args_expr: ["{vars.hwnd}", "--name", "Close", "--control-type", "Button"]
+    capture:
+      # find_control output: header row, then name auto_id ctype l t r b cx cy
+      vars.close_x: "$.rows[1].cols[7]"
+      vars.close_y: "$.rows[1].cols[8]"
+
+  - id: click_close
+    type: click
+    description: "Mouse-click the Close button center coordinates."
+    script: scripts/click.py
+    args_expr: ["{vars.close_x}", "{vars.close_y}"]
+    wait_after: after_close_click_ms
+
+  - id: assert_window_closed
+    type: find_window
+    description: "Re-search for the PowerShell window; must NOT be found."
+    script: scripts/find_window.py
+    args: ["^Windows PowerShell$"]
+    expect_exit: 1            # 1 == "no match", which is the success condition here
+
+# Pass criteria (machine-checkable summary).
+expected_results:
+  - "PowerShell window opened from Start menu within after_launch_enter_ms."
+  - "All 4 echo_texts validated via UIA console read."
+  - "4 screenshots saved as screenshots/{timestamp}/iter_1..4.png."
+  - "Close button located via UIA (Name=Close, ControlType=Button)."
+  - "find_window after click returns exit code 1 (window gone)."

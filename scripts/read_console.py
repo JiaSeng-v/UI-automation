@@ -1,0 +1,53 @@
+"""Dump UIA text of a window (e.g. PowerShell console) to stdout."""
+import argparse, sys
+from pywinauto import Application
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("hwnd", type=lambda s: int(s, 0))
+    a = p.parse_args()
+    app = Application(backend="uia").connect(handle=a.hwnd)
+    win = app.window(handle=a.hwnd)
+    texts = []
+    try:
+        texts = win.descendants()
+    except Exception:
+        pass
+    # Prefer the Document control (PowerShell console exposes its buffer there)
+    for c in texts:
+        try:
+            if c.element_info.control_type == "Document":
+                v = c.iface_value.CurrentValue if hasattr(c, "iface_value") else None
+                if v:
+                    print(v)
+                    return
+                # fallback: legacy patterns
+                try:
+                    print(c.legacy_properties().get("Value", ""))
+                    return
+                except Exception:
+                    pass
+        except Exception:
+            continue
+    # Last resort: dump every visible text
+    out = []
+    for c in texts:
+        try:
+            t = c.window_text()
+            if t:
+                out.append(t)
+        except Exception:
+            continue
+    print("\n".join(out))
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"ERROR: {e}", file=sys.stderr); sys.exit(1)
