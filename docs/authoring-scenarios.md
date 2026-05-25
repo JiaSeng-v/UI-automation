@@ -35,6 +35,27 @@ app builds.
 If you only supply a name the tool prints a TIP suggesting you add an
 `auto_id=` — it never blocks.
 
+### Live safety checks
+
+The REPL runs each step against the real UI as you type it, and applies
+two safeguards on top of that:
+
+- **Ambiguous selector halt.** If a `find_control` selector matches more
+  than one control, the step is **not executed**; instead the REPL prints
+  every candidate (name / auto_id / type / rect) and asks you to re-enter
+  the step with a more specific selector (`auto_id=`, `type=`, `class=`,
+  or `nth=`). This is what would have hit the "two Close buttons"
+  problem during authoring instead of at run time.
+
+- **Recurring-state halt.** After each acting step (`click` / `key` /
+  `type_text`), the REPL captures a UI fingerprint via
+  `scripts/ui_fingerprint.py`. If the **last three** consecutive
+  fingerprints are identical — i.e. the UI hasn't changed despite your
+  inputs — authoring halts with a prompt:
+  - `[k]eep` — accept the step and keep going
+  - `[d]iscard` — drop the step and try a different one
+  - `[a]bort` — discard the current batch entirely
+
 ## Option B — Hand-edit YAML
 
 1. Use **Inspect.exe** (ships with the Windows SDK, typically at

@@ -81,12 +81,63 @@ class StepParseError(ValueError):
     """Raised when a compact step line cannot be parsed."""
 
 
+_FINGERPRINT_STEP_TYPES = frozenset({"click", "key", "type_text"})
+_FINGERPRINT_TIMEOUT_S = 5
+
+
 class RecurrenceDetector:
-    """Stub for future recurring-state detection."""
+    """Detect a stuck UI by tracking the last N fingerprints."""
+
+    WINDOW_SIZE = 3
+
+    def __init__(self) -> None:
+        self.recent: list[str] = []
 
     def observe(self, step: dict, ui_hash: Optional[str]) -> Optional[str]:
-        """Return a warning when recurrence is detected; currently a no-op."""
+        """Record ``ui_hash``; return it when the last WINDOW_SIZE all match."""
+        if not ui_hash:
+            return None
+        self.recent.append(ui_hash)
+        if len(self.recent) > self.WINDOW_SIZE:
+            self.recent.pop(0)
+        if (len(self.recent) == self.WINDOW_SIZE
+                and len(set(self.recent)) == 1):
+            return ui_hash
         return None
+
+    def reset(self) -> None:
+        self.recent.clear()
+
+
+class RecurrenceHalt(Exception):
+    """Raised when the same UI fingerprint is observed WINDOW_SIZE times."""
+
+    def __init__(self, ui_hash: str):
+        super().__init__(f"UI fingerprint {ui_hash} seen "
+                         f"{RecurrenceDetector.WINDOW_SIZE} times in a row")
+        self.ui_hash = ui_hash
+
+
+def _capture_ui_fingerprint() -> Optional[str]:
+    """Run ``scripts/ui_fingerprint.py`` and return the digest, or ``None``."""
+    script = os.path.join(_REPO_ROOT, "scripts", "ui_fingerprint.py")
+    if not os.path.exists(script):
+        return None
+    try:
+        proc = subprocess.run(
+            [sys.executable, script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=_FINGERPRINT_TIMEOUT_S,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+    out = proc.stdout.strip()
+    return out or None
 
 
 class AmbiguousMatch(Exception):
@@ -263,6 +314,30 @@ def _print_ambiguous_matches(matches: list[list[str]]) -> None:
             print(f"  [{i}] {row}")
     print("Re-enter the step with a more specific selector "
           "(add auto_id=, type=, class=, or nth=).")
+
+
+def _prompt_recurrence_action(ui_hash: str) -> str:
+    """Ask the author what to do after a recurrence halt. Returns one of:
+    ``keep``, ``discard``, ``abort``. Defaults to ``keep`` on EOF / blank input.
+    """
+    print(f"\nRECURRENCE: the UI has not changed for "
+          f"{RecurrenceDetector.WINDOW_SIZE} consecutive acting steps "
+          f"(fingerprint {ui_hash}).")
+    print("  [k]eep    — accept this step and continue authoring")
+    print("  [d]iscard — drop this step and try a different one")
+    print("  [a]bort   — discard the current batch of steps")
+    while True:
+        try:
+            ans = _prompt("recurrence> ").strip().lower()
+        except EOFError:
+            return "keep"
+        if not ans or ans in {"k", "keep"}:
+            return "keep"
+        if ans in {"d", "discard", "skip", "s"}:
+            return "discard"
+        if ans in {"a", "abort"}:
+            return "abort"
+        print("Please answer k, d, or a.")
 
 
 def _prompt(text: str) -> str:
@@ -588,10 +663,21 @@ class AuthorSession:
                 print(message)
                 if not ok:
                     raise StepParseError(f"execution failed for {step.get('id', step.get('type'))}: {message}")
-                warning = self.detector.observe(step, ui_hash=None)
-                if warning:
-                    print(f"WARNING: {warning}")
                 pending.append(step)
+                if step.get("type") in _FINGERPRINT_STEP_TYPES:
+                    ui_hash = _capture_ui_fingerprint()
+                    recurred = self.detector.observe(step, ui_hash)
+                    if recurred:
+                        action = _prompt_recurrence_action(recurred)
+                        self.detector.reset()
+                        if action == "discard":
+                            pending.pop()
+                            print(f"discarded step {step.get('id', '?')}")
+                        elif action == "abort":
+                            raise StepParseError(
+                                "authoring aborted due to recurring UI state"
+                            )
+                        # 'keep' falls through; step stays in pending
         return pending
 
     def add_lines(self, lines: list[str]) -> bool:
