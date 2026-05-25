@@ -14,8 +14,12 @@ def main():
     p.add_argument("--class", dest="cls", default=None)
     p.add_argument("--backend", choices=["uia", "win32", "any"], default="any",
                    help="UIA misses some legacy Win32 dialogs (e.g. classic 'Save As'); 'any' searches both and de-dups by handle.")
-    p.add_argument("--all", action="store_true", help="print all matches")
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--all", action="store_true", help="print all matches")
+    g.add_argument("--nth", type=int, help="print only the Nth match (1-based) after filtering and de-dup")
     a = p.parse_args()
+    if a.nth is not None and a.nth < 1:
+        p.error("--nth must be a 1-based integer")
     rx = re.compile(a.title_regex)
     matches = []
     seen = set()
@@ -35,8 +39,14 @@ def main():
                 seen.add(w.handle)
             except Exception:
                 continue
+    # Sort after filtering/de-dup so numbered candidate lists are reproducible.
+    matches.sort(key=lambda m: (m[0], m[1]))
     if not matches:
         print("no match", file=sys.stderr); sys.exit(1)
+    if a.nth is not None:
+        if a.nth > len(matches):
+            print("no match", file=sys.stderr); sys.exit(1)
+        matches = [matches[a.nth - 1]]
     for m in (matches if a.all else matches[:1]):
         print("\t".join(str(x) for x in m))
 
