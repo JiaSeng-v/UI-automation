@@ -1,12 +1,15 @@
 """Interactive REPL for authoring UI automation test-case YAML.
 
-This tool builds a runnable YAML spec one compact step line at a time. It is a
-skeleton for future live execution, disambiguation, and recurring-state checks;
-those seams are intentionally present but currently implemented as stubs.
+This tool builds a runnable YAML spec one compact step line at a time. Each
+parsed step is executed live via the same engine ``run_test.py`` uses, so
+captured variables (window hwnds, control coordinates, ...) accumulate in
+``vars`` as you author and become available to later steps.
 """
 import argparse
 import os
+import re
 import shlex
+import subprocess
 import sys
 from collections import defaultdict
 from typing import Optional
@@ -17,6 +20,15 @@ try:
     from prompt_toolkit import prompt as pt_prompt
 except Exception:  # pragma: no cover - optional dependency
     pt_prompt = None
+
+# Make run_test importable so the live executor can reuse its expression
+# rendering and capture helpers.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+import run_test  # noqa: E402  (sys.path adjusted above)
+
+EXECUTOR_TIMEOUT_S = 30
 
 HELP = """
 Interactive test authoring
@@ -77,13 +89,94 @@ class RecurrenceDetector:
         return None
 
 
-def execute_step(step: dict) -> tuple[bool, str]:
-    """Stub for live execution.
+def execute_step(step: dict, vars_dict: dict, spec: dict) -> tuple[bool, str]:
+    """Run ``step`` live via subprocess, applying captures into ``vars_dict``.
 
-    Returns (ok, message). For now always returns success; the live executor will
-    land in the author-live-exec follow-up.
+    Returns (ok, message). Steps without a ``script`` field (e.g. internal
+    ``_wait``) succeed as a no-op.
     """
-    return True, "execute_step not yet implemented (will land in author-live-exec)"
+    step_type = step.get("type")
+    if not step_type or step_type.startswith("_"):
+        return True, "skipped (no-op step)"
+    script = step.get("script")
+    if not script:
+        return True, f"skipped (no script for type {step_type!r})"
+
+    subs = {
+        "vars": vars_dict,
+        "inputs": spec.get("inputs", {}) or {},
+        "artifacts": spec.get("artifacts", {}) or {},
+        "timestamp": "author",
+    }
+
+    if step_type == "screenshot":
+        raw_args = (step.get("args_expr_on_pass")
+                    or step.get("args_expr")
+                    or step.get("args")
+                    or [])
+    else:
+        raw_args = step.get("args") or step.get("args_expr") or []
+
+    try:
+        args = [run_test.render(a, subs) for a in raw_args]
+    except Exception as exc:
+        return False, f"failed to render args: {exc}"
+
+    expect_exit = int(step.get("expect_exit", 0))
+    cmd = [sys.executable, os.path.join(_REPO_ROOT, script)] + [str(a) for a in args]
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=EXECUTOR_TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired:
+        return False, f"timeout after {EXECUTOR_TIMEOUT_S}s running {script}"
+    except OSError as exc:
+        return False, f"failed to spawn {script}: {exc}"
+
+    if proc.returncode != expect_exit:
+        stderr = (proc.stderr or "").strip().splitlines()
+        tail = stderr[-1] if stderr else ""
+        return False, (f"exit {proc.returncode}, expected {expect_exit}"
+                       + (f"; stderr: {tail}" if tail else ""))
+
+    if "capture" in step:
+        try:
+            _apply_capture(proc.stdout, step["capture"], vars_dict)
+        except Exception as exc:
+            return False, f"capture failed: {exc}"
+
+    return True, f"ok ({len(proc.stdout)} bytes stdout)"
+
+
+def _apply_capture(out_text: str, mapping: dict, vars_dict: dict) -> None:
+    """Apply ``$.cols[i]`` / ``$.rows[j].cols[i]`` selectors to TSV output."""
+    lines = [l for l in out_text.splitlines() if l.strip()]
+    rows = [l.split("\t") for l in lines]
+    first_cols = rows[0] if rows else []
+    for dst, sel in mapping.items():
+        m = re.fullmatch(r"\$\.cols\[(\d+)\]", sel)
+        if m:
+            idx = int(m.group(1))
+            if idx >= len(first_cols):
+                raise ValueError(f"selector {sel!r} out of range (have {len(first_cols)} cols)")
+            val = first_cols[idx]
+        else:
+            m = re.fullmatch(r"\$\.rows\[(\d+)\]\.cols\[(\d+)\]", sel)
+            if not m:
+                raise ValueError(f"bad selector: {sel}")
+            r_idx, c_idx = int(m.group(1)), int(m.group(2))
+            if r_idx >= len(rows) or c_idx >= len(rows[r_idx]):
+                raise ValueError(f"selector {sel!r} out of range "
+                                 f"(have {len(rows)} rows)")
+            val = rows[r_idx][c_idx]
+        if not dst.startswith("vars."):
+            raise ValueError(f"capture dst must start with vars.: {dst}")
+        vars_dict[dst[5:]] = val
 
 
 def maybe_disambiguate(step: dict) -> dict:
@@ -353,6 +446,7 @@ class AuthorSession:
         self.dirty = True
         self.saved_once = False
         self._wait_applied = False
+        self.vars: dict = {}
 
     def next_id(self, step_type: str) -> str:
         self.counters[step_type] += 1
@@ -402,7 +496,7 @@ class AuthorSession:
                     self.apply_wait(step["ms"], pending)
                     continue
                 self.assign_id(step)
-                ok, message = execute_step(step)
+                ok, message = execute_step(step, self.vars, self.spec)
                 print(message)
                 if not ok:
                     raise StepParseError(f"execution failed for {step.get('id', step.get('type'))}: {message}")
