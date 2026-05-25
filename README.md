@@ -57,19 +57,7 @@ dependencies required.
 
 ## Using with Copilot CLI
 
-If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot)
-installed, you can drive the toolkit conversationally. Two example prompts:
-
-**Run an existing scenario:**
-> Run `.\run.ps1 test_cases\powershell_echo_loop.yaml -q`, then summarize
-> pass/fail per iteration and list the screenshot paths.
-
-**Author a new scenario:**
-> Create a new test case at `test_cases/notepad_save.yaml` that opens Notepad
-> from the Start menu, types `hello from copilot`, saves the file as
-> `%TEMP%\copilot_test.txt` via Ctrl+S, validates the file exists, and closes
-> Notepad with a mouse click on the Close button. Use UIA selectors and
-> follow the spec format in `docs/test-spec-format.md`.
+If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any other agent that reads `AGENTS.md`) installed, you can drive the toolkit conversationally. The repo's [`AGENTS.md`](AGENTS.md) is auto-loaded and contains the rules the agent must follow when authoring or editing test cases. For the human-facing workflow and example prompts, see [`docs/copilot-cli-test-authoring.md`](docs/copilot-cli-test-authoring.md).
 
 ### Token-efficient Copilot usage
 
@@ -91,6 +79,8 @@ per turn. To keep costs low without changing test behavior:
 - [File structure](docs/file-structure.md) — what each file and folder in the repo is for.
 - [Test-spec format](docs/test-spec-format.md) — YAML keys, step types, placeholders, capture syntax.
 - [Authoring scenarios](docs/authoring-scenarios.md) — interactive REPL workflow + selector conventions.
+- [Creating test cases with Copilot CLI](docs/copilot-cli-test-authoring.md) — user guide + Copilot prompt template.
+- [`AGENTS.md`](AGENTS.md) — auto-loaded instructions for AI coding agents working in this repo.
 - [Reproducibility](docs/reproducibility.md) — how runs stay bit-identical.
 - [Troubleshooting](docs/troubleshooting.md) — DPI, multi-monitor, UI language, legacy pip path.
 

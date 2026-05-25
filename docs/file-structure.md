@@ -8,6 +8,7 @@ around quickly.
 | Path | Purpose |
 |---|---|
 | `README.md` | Project overview, install command, example invocation, doc index. |
+| `AGENTS.md` | Auto-loaded instructions for AI coding agents (Copilot CLI, Codex CLI, Cursor, Aider, Claude Code, …) working in this repo. Follows the [agents.md](https://agents.md/) convention. |
 | `LICENSE` | MIT license. |
 | `install.ps1` | One-line bootstrap installer for a fresh Windows machine (see [Entry points](#entry-points)). |
 | `setup.ps1` | Local convenience wrapper that runs `uv sync` when `uv` is already installed. |
@@ -194,6 +195,7 @@ author_test.py <out_yaml>
 | [`file-structure.md`](file-structure.md) | This document — layout of the repo. |
 | [`test-spec-format.md`](test-spec-format.md) | Reference for YAML spec keys, step types, placeholder syntax, and `capture` rules. |
 | [`authoring-scenarios.md`](authoring-scenarios.md) | Workflow for writing a new scenario, including using Inspect.exe to discover UIA selectors. |
+| [`copilot-cli-test-authoring.md`](copilot-cli-test-authoring.md) | Human-facing workflow for authoring test cases via Copilot CLI / other AI agents. |
 | [`reproducibility.md`](reproducibility.md) | Why runs stay bit-identical (pinned inputs, UIA targeting, locked deps). |
 | [`troubleshooting.md`](troubleshooting.md) | DPI scaling, multi-monitor, UI-language, and legacy pip path issues. |
 
