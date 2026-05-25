@@ -32,6 +32,7 @@ if sys.platform == "win32":
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PY = sys.executable
+QUIET = False
 
 
 class Ctx:
@@ -105,15 +106,17 @@ def render(value, subs):
 
 def run_cmd(script, args, expect_exit=0):
     cmd = [PY, os.path.join(ROOT, script)] + [str(a) for a in args]
-    print(f"  $ {' '.join(cmd)}")
+    if not QUIET:
+        print(f"  $ {' '.join(cmd)}")
     p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
-    if p.stdout:
+    failed = p.returncode != expect_exit
+    if p.stdout and (failed or not QUIET):
         for line in p.stdout.rstrip().splitlines():
             print(f"    | {line}")
     if p.stderr:
         for line in p.stderr.rstrip().splitlines():
             print(f"    ! {line}")
-    if p.returncode != expect_exit:
+    if failed:
         raise AssertionError(f"exit {p.returncode}, expected {expect_exit}")
     return p
 
@@ -150,14 +153,16 @@ def exec_step(step, ctx, local_subs):
     subs = dict(ctx.subs); subs.update(local_subs)
     t = step["type"]
     desc = step.get("description", "")
-    print(f"\n[{step.get('id','?')}] ({t}) {desc.strip().splitlines()[0] if desc else ''}")
+    if not QUIET:
+        print(f"\n[{step.get('id','?')}] ({t}) {desc.strip().splitlines()[0] if desc else ''}")
 
     if t == "foreach":
         items = lookup(step["items"], subs)
         var = step["var"]; idx_var = step.get("index_var", "i")
         body = step["body"]
         for i, item in enumerate(items, start=1):
-            print(f"\n--- iter {i}: {var}={item!r} ---")
+            if not QUIET:
+                print(f"\n--- iter {i}: {var}={item!r} ---")
             local = {var: item, idx_var: i}
             ctx.iter_failed[i] = False
             for sub in body:
@@ -188,7 +193,8 @@ def exec_step(step, ctx, local_subs):
                                capture_output=True, text=True, encoding="utf-8", errors="replace")
             last = p.stdout
             if target in last:
-                print(f"    matched: {target!r}")
+                if not QUIET:
+                    print(f"    matched: {target!r}")
                 return
             time.sleep(interval)
         raise AssertionError(f"console did not contain {target!r}; last={last[:200]!r}")
@@ -211,9 +217,13 @@ def exec_step(step, ctx, local_subs):
 
 
 def main():
+    global QUIET
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("spec")
+    ap.add_argument("-q", "--quiet", action="store_true",
+                    help="suppress per-step headers and successful stdout echo")
     a = ap.parse_args()
+    QUIET = a.quiet
     with open(a.spec, "r", encoding="utf-8") as f:
         spec = yaml.safe_load(f)
     ctx = Ctx(spec)
