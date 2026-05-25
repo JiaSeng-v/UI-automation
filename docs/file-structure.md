@@ -11,6 +11,7 @@ around quickly.
 | `LICENSE` | MIT license. |
 | `install.ps1` | One-line bootstrap installer for a fresh Windows machine (see [Entry points](#entry-points)). |
 | `setup.ps1` | Local convenience wrapper that runs `uv sync` when `uv` is already installed. |
+| `run.ps1` | Thin shortcut wrapper: `.\run.ps1 <spec> [-q]` → `uv run python run_test.py <spec> [-q]`. Lets you invoke a scenario without going through an LLM. |
 | `run_test.py` | YAML test-spec runner (see [Entry points](#entry-points)). |
 | `pyproject.toml` | Project metadata + direct dependencies (`pyautogui`, `pywinauto`, `Pillow`, `PyYAML`). Pins Python to `>=3.10,<3.13`. |
 | `requirements.txt` | Human-edited top-level requirements list (mirrors `pyproject.toml` deps). |
@@ -43,6 +44,17 @@ Lightweight alternative for developers who already have `uv` installed.
 `cd`s to the repo, verifies `uv` is on `PATH`, runs `uv sync`, and prints the
 example command. Use `install.ps1` instead on a fresh machine.
 
+### `run.ps1`
+Thin PowerShell wrapper around `uv run python run_test.py`. Takes the spec
+path as its first argument and forwards any remaining flags (e.g. `-q`).
+`Set-Location $PSScriptRoot` lets you call it from any working directory,
+and it propagates the runner's exit code unchanged.
+
+```powershell
+.\run.ps1 test_cases\powershell_echo_loop.yaml
+.\run.ps1 test_cases\powershell_echo_loop.yaml -q
+```
+
 ### `run_test.py`
 The test runner. Given a YAML spec, it:
 
@@ -61,7 +73,11 @@ The test runner. Given a YAML spec, it:
 - Exits **0** on full pass, **1** on a failed assertion, **2** on runner error
   (bad spec, missing script, etc.).
 
-Usage: `uv run python run_test.py test_cases\<scenario>.yaml`.
+Pass `-q` / `--quiet` to suppress per-step headers and successful subcommand
+stdout — useful when running under an LLM to keep token usage down. Failure
+output, stderr, and the final `RESULT` line are always shown.
+
+Usage: `uv run python run_test.py test_cases\<scenario>.yaml [-q]`.
 
 ## `scripts/`
 
