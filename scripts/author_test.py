@@ -89,6 +89,14 @@ class RecurrenceDetector:
         return None
 
 
+class AmbiguousMatch(Exception):
+    """Raised when a find_control selector matches more than one control."""
+
+    def __init__(self, matches: list[list[str]]):
+        super().__init__(f"{len(matches)} matches")
+        self.matches = matches
+
+
 def execute_step(step: dict, vars_dict: dict, spec: dict) -> tuple[bool, str]:
     """Run ``step`` live via subprocess, applying captures into ``vars_dict``.
 
@@ -179,9 +187,82 @@ def _apply_capture(out_text: str, mapping: dict, vars_dict: dict) -> None:
         vars_dict[dst[5:]] = val
 
 
-def maybe_disambiguate(step: dict) -> dict:
-    """Stub. Will be replaced. For now returns the step unchanged."""
+def maybe_disambiguate(step: dict, vars_dict: dict, spec: dict) -> dict:
+    """Probe ``find_control`` steps for ambiguity; raise ``AmbiguousMatch`` if >1.
+
+    For non-find_control steps this is a no-op and returns ``step`` unchanged.
+    The probe runs the same script with ``--all`` forced (and ``--nth``/``--all``
+    stripped from the original args) so we get the full match set under the
+    user's filters. If any args fail to render, we silently skip probing.
+    """
+    if step.get("type") != "find_control":
+        return step
+    script = step.get("script")
+    if not script:
+        return step
+
+    raw_args = step.get("args") or step.get("args_expr") or []
+    subs = {
+        "vars": vars_dict,
+        "inputs": spec.get("inputs", {}) or {},
+        "artifacts": spec.get("artifacts", {}) or {},
+        "timestamp": "author",
+    }
+    try:
+        rendered = [run_test.render(a, subs) for a in raw_args]
+    except Exception:
+        return step
+
+    cleaned: list[str] = []
+    skip_next = False
+    for tok in rendered:
+        if skip_next:
+            skip_next = False
+            continue
+        s = str(tok)
+        if s == "--all":
+            continue
+        if s == "--nth":
+            skip_next = True
+            continue
+        cleaned.append(s)
+    cleaned.append("--all")
+
+    cmd = [sys.executable, os.path.join(_REPO_ROOT, script)] + [str(a) for a in cleaned]
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=EXECUTOR_TIMEOUT_S,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return step
+
+    if proc.returncode != 0:
+        return step
+
+    lines = [l for l in proc.stdout.splitlines() if l.strip()]
+    rows = [l.split("\t") for l in lines[1:]]
+    if len(rows) > 1:
+        raise AmbiguousMatch(rows)
     return step
+
+
+def _print_ambiguous_matches(matches: list[list[str]]) -> None:
+    """Pretty-print a list of find_control match rows for the REPL."""
+    print(f"AMBIGUOUS: selector matched {len(matches)} controls:")
+    for i, row in enumerate(matches, start=1):
+        if len(row) >= 9:
+            name, auto_id, ctype, left, top, right, bottom = row[:7]
+            print(f"  [{i}] name={name!r} auto_id={auto_id!r} type={ctype!r} "
+                  f"rect=({left},{top},{right},{bottom})")
+        else:
+            print(f"  [{i}] {row}")
+    print("Re-enter the step with a more specific selector "
+          "(add auto_id=, type=, class=, or nth=).")
 
 
 def _prompt(text: str) -> str:
@@ -496,11 +577,17 @@ class AuthorSession:
                     self.apply_wait(step["ms"], pending)
                     continue
                 self.assign_id(step)
+                try:
+                    step = maybe_disambiguate(step, self.vars, self.spec)
+                except AmbiguousMatch as exc:
+                    _print_ambiguous_matches(exc.matches)
+                    raise StepParseError(
+                        f"ambiguous find_control: {len(exc.matches)} matches"
+                    )
                 ok, message = execute_step(step, self.vars, self.spec)
                 print(message)
                 if not ok:
                     raise StepParseError(f"execution failed for {step.get('id', step.get('type'))}: {message}")
-                step = maybe_disambiguate(step)
                 warning = self.detector.observe(step, ui_hash=None)
                 if warning:
                     print(f"WARNING: {warning}")
