@@ -29,19 +29,26 @@ def main():
     p.add_argument("--control-type", dest="control_type", default=None)
     p.add_argument("--class", dest="cls", default=None)
     p.add_argument("--match", choices=["exact", "contains", "regex"], default="exact")
+    p.add_argument("--backend", choices=["uia", "win32"], default="uia")
     p.add_argument("--all", action="store_true", help="print all matches, not just first")
     a = p.parse_args()
 
-    app = Application(backend="uia").connect(handle=a.hwnd)
+    app = Application(backend=a.backend).connect(handle=a.hwnd)
     win = app.window(handle=a.hwnd)
     found = []
     for c in win.descendants():
         try:
-            info = c.element_info
-            name = info.name or ""
-            auto_id = info.automation_id or ""
-            ctype = info.control_type or ""
-            cls = info.class_name or ""
+            if a.backend == "uia":
+                info = c.element_info
+                name = info.name or ""
+                auto_id = info.automation_id or ""
+                ctype = info.control_type or ""
+                cls = info.class_name or ""
+            else:
+                name = c.window_text() or ""
+                auto_id = ""
+                ctype = c.friendly_class_name() or ""
+                cls = c.class_name() or ""
             if not (matches(name, a.name, a.match)
                     and matches(auto_id, a.auto_id, a.match)
                     and matches(ctype, a.control_type, a.match)

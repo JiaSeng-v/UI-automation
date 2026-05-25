@@ -12,21 +12,29 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("title_regex")
     p.add_argument("--class", dest="cls", default=None)
+    p.add_argument("--backend", choices=["uia", "win32", "any"], default="any",
+                   help="UIA misses some legacy Win32 dialogs (e.g. classic 'Save As'); 'any' searches both and de-dups by handle.")
     p.add_argument("--all", action="store_true", help="print all matches")
     a = p.parse_args()
     rx = re.compile(a.title_regex)
     matches = []
-    for w in Desktop(backend="uia").windows():
-        try:
-            title = w.window_text() or ""
-            if not rx.search(title):
+    seen = set()
+    backends = ["uia", "win32"] if a.backend == "any" else [a.backend]
+    for backend in backends:
+        for w in Desktop(backend=backend).windows():
+            try:
+                if w.handle in seen:
+                    continue
+                title = w.window_text() or ""
+                if not rx.search(title):
+                    continue
+                if a.cls and w.class_name() != a.cls:
+                    continue
+                r = w.rectangle()
+                matches.append((w.process_id(), w.handle, r.left, r.top, r.right, r.bottom, title))
+                seen.add(w.handle)
+            except Exception:
                 continue
-            if a.cls and w.class_name() != a.cls:
-                continue
-            r = w.rectangle()
-            matches.append((w.process_id(), w.handle, r.left, r.top, r.right, r.bottom, title))
-        except Exception:
-            continue
     if not matches:
         print("no match", file=sys.stderr); sys.exit(1)
     for m in (matches if a.all else matches[:1]):
