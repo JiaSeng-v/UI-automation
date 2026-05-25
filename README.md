@@ -45,6 +45,7 @@ installed, you can drive the toolkit conversationally. Two example prompts:
 
 ## Documentation
 
+- [File structure](docs/file-structure.md) — what each file and folder in the repo is for.
 - [Test-spec format](docs/test-spec-format.md) — YAML keys, step types, placeholders, capture syntax.
 - [Authoring scenarios](docs/authoring-scenarios.md) — workflow with Inspect.exe.
 - [Reproducibility](docs/reproducibility.md) — how runs stay bit-identical.
