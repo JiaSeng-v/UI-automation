@@ -16,6 +16,7 @@ A test case is a YAML file with these top-level keys:
 | `type` | Calls | Notes |
 |---|---|---|
 | `key`, `type_text`, `click`, `screenshot`, `find_window`, `find_control` | matching `scripts/*.py` | `expect_exit` defaults to 0. Set to a non-zero value to assert failure (e.g. `find_window` after closing a window). |
+| `assert_file` | `assert_file_exists.py` | Asserts a file exists (or, with `--negate`, does not). Optional `--contains` checks a substring; `--delete` removes the file after the check. |
 | `assert_console_contains` | `read_console.py` with polling | Asserts `expected_contains_expr` appears within `poll_total_ms`. |
 | `foreach` | n/a | Iterates `items` (e.g. `inputs.echo_texts`), exposing `var` and `index_var` to nested `body` steps. |
 

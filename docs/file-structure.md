@@ -24,6 +24,7 @@ around quickly.
 | `docs/` | Markdown documentation — see [docs/](#docs). |
 | `scripts/` | Primitive Python helpers invoked by `run_test.py` — see [scripts/](#scripts). |
 | `test_cases/` | Declarative YAML scenarios — see [test_cases/](#test_cases). |
+| `tests/` | Stdlib `unittest` coverage for `scripts/author_test.py`. Run with `uv run python -m unittest discover -s tests -v`. |
 
 ## Entry points
 
@@ -117,24 +118,32 @@ screenshot.py <out_path> [--region X Y W H]
 ```
 
 ### `find_window.py` — locate a top-level window
-Iterates all desktop windows and returns those whose title matches a regex
-(optionally filtered by class name). Prints tab-separated
+Iterates all desktop windows (via `uia`, `win32`, or `any`, de-duplicating by
+handle) and returns those whose title matches a regex (optionally filtered by
+class name). Results are sorted by `(pid, hwnd)` so numbered candidate lists
+are reproducible. Prints tab-separated
 `pid hwnd left top right bottom title`. Exits **1** if nothing matches — used
 by specs to assert a window is *gone* (`expect_exit: 1`).
 
 ```
-find_window.py <title_regex> [--class CLASS] [--all]
+find_window.py <title_regex> [--class CLASS] [--backend uia|win32|any]
+                              [--all | --nth N]
 ```
 
 ### `find_control.py` — locate a UIA control inside a window
 Walks the UIA descendant tree of a window (by `hwnd`) and matches controls by
 `name`, `auto_id`, `control_type`, and/or `class`, using `exact` / `contains`
 / `regex` comparison. Prints a header row plus rectangle and computed center
-coordinates, ready to feed into `click.py`.
+coordinates, ready to feed into `click.py`. With `--name-fallback`, if the
+`--auto-id` filter yields zero matches the scan retries without it (name /
+type / class still apply) — used by the authoring tool to keep selectors
+resilient when AutomationIds churn between app builds.
 
 ```
 find_control.py <hwnd> [--name N] [--auto-id A] [--control-type T]
-                       [--class C] [--match exact|contains|regex] [--all]
+                       [--class C] [--match exact|contains|regex]
+                       [--backend uia|win32] [--parent-hwnd HWND]
+                       [--all | --nth N] [--name-fallback]
 ```
 
 ### `read_console.py` — dump a window's UIA text
@@ -145,6 +154,37 @@ validate console output without OCR.
 
 ```
 read_console.py <hwnd>
+```
+
+### `assert_file_exists.py` — file existence / content assertions
+Asserts a file exists (or, with `--negate`, does not), optionally checking
+that it contains a given substring, and optionally deleting it afterwards
+(`--delete`). Used by the YAML `assert_file` step type.
+
+```
+assert_file_exists.py <path> [--contains TEXT] [--negate] [--delete]
+```
+
+### `ui_fingerprint.py` — short hash of the current foreground UI
+Prints a 16-char SHA-256 prefix derived from the foreground window's title,
+class, process, optional rectangle, and up to 50 direct UIA children sorted
+by screen position. `scripts/author_test.py`'s recurrence detector calls
+this after each acting step (`click` / `key` / `type_text`) to spot a stuck
+UI.
+
+```
+ui_fingerprint.py [--verbose] [--no-include-rect]
+```
+
+### `author_test.py` — interactive YAML authoring REPL
+Builds a runnable YAML spec one compact step line at a time. Each step is
+executed live against the real UI, so captured variables (window hwnds,
+control coordinates) accumulate as you go. Includes two safety halts:
+ambiguous `find_control` selectors and 3-in-a-row identical UI fingerprints.
+See [`authoring-scenarios.md`](authoring-scenarios.md) for the workflow.
+
+```
+author_test.py <out_yaml>
 ```
 
 ## `docs/`

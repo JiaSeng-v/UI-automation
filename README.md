@@ -32,6 +32,29 @@ Exit codes: `0` pass, `1` assertion failed, `2` runner error.
 Add `-q` (or `--quiet`) to suppress per-step echo and successful subcommand
 stdout; failures, stderr, and the final RESULT line are always shown.
 
+## Author a new scenario
+
+Use the interactive REPL — each step is executed live against the real UI
+and captured into the YAML as you go:
+
+```powershell
+uv run python scripts/author_test.py test_cases\my_scenario.yaml
+```
+
+The REPL halts on ambiguous selectors and on a UI that stops responding
+(3 consecutive identical fingerprints). See
+[`docs/authoring-scenarios.md`](docs/authoring-scenarios.md) for the full
+workflow and the recommended `auto_id + name` selector pattern.
+
+## Run the tests
+
+```powershell
+uv run python -m unittest discover -s tests -v
+```
+
+22 stdlib `unittest` cases covering the authoring tool — no extra dev
+dependencies required.
+
 ## Using with Copilot CLI
 
 If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot)
@@ -67,7 +90,7 @@ per turn. To keep costs low without changing test behavior:
 
 - [File structure](docs/file-structure.md) — what each file and folder in the repo is for.
 - [Test-spec format](docs/test-spec-format.md) — YAML keys, step types, placeholders, capture syntax.
-- [Authoring scenarios](docs/authoring-scenarios.md) — workflow with Inspect.exe.
+- [Authoring scenarios](docs/authoring-scenarios.md) — interactive REPL workflow + selector conventions.
 - [Reproducibility](docs/reproducibility.md) — how runs stay bit-identical.
 - [Troubleshooting](docs/troubleshooting.md) — DPI, multi-monitor, UI language, legacy pip path.
 
