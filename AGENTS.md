@@ -17,8 +17,7 @@ This file follows the [agents.md](https://agents.md/) convention and is loaded a
 - `docs/file-structure.md` — what every file/folder is for.
 - `docs/reproducibility.md` — why runs must be bit-identical.
 - `docs/troubleshooting.md` — DPI, multi-monitor, UI language gotchas.
-- `test_cases/powershell_echo_loop.yaml` — canonical example.
-- `test_cases/calculator_test.yaml` — `foreach` + UIA control example.
+- `test_cases/powershell_echo_loop.yaml` — canonical example (also shows `foreach` + UIA validation).
 - `scripts/*.py` — one script per step `type`.
 
 ## Hard rules when authoring or editing a test case
