@@ -74,6 +74,7 @@ SCRIPT_BY_TYPE = {
     "find_control": "scripts/find_control.py",
     "assert_file": "scripts/assert_file_exists.py",
     "screenshot": "scripts/screenshot.py",
+    "maximize_window": "scripts/maximize_window.py",
 }
 
 
@@ -588,6 +589,17 @@ def parse_step_line(line: str) -> dict | list[dict]:
             "description": f"Capture screenshot {tokens[1]!r}.",
             "script": SCRIPT_BY_TYPE["screenshot"],
             "args_expr": ["{artifacts.screenshot_dir}/" + tokens[1]],
+        }
+
+    if verb == "maximize":
+        if len(tokens) > 2:
+            raise StepParseError("maximize takes at most one window hwnd var, e.g. maximize win_hwnd")
+        hwnd_var = tokens[1] if len(tokens) == 2 else "win_hwnd"
+        return {
+            "type": "maximize_window",
+            "description": f"Maximize window {hwnd_var!r} (skip if already maximized).",
+            "script": SCRIPT_BY_TYPE["maximize_window"],
+            "args_expr": [_var_expr(hwnd_var)],
         }
 
     raise StepParseError(f"unknown step command {tokens[0]!r}")

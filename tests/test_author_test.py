@@ -60,6 +60,21 @@ class ParseStepLineSelectorTests(unittest.TestCase):
         self.assertIn("--name", args)
         self.assertIn("--name-fallback", args)
 
+    def test_maximize_defaults_to_win_hwnd(self):
+        step = parse_step_line("maximize")
+        self.assertEqual(step["type"], "maximize_window")
+        self.assertEqual(step["script"], "scripts/maximize_window.py")
+        self.assertEqual(step["args_expr"], ["{vars.win_hwnd}"])
+
+    def test_maximize_accepts_explicit_hwnd_var(self):
+        step = parse_step_line("maximize myhwnd")
+        self.assertEqual(step["type"], "maximize_window")
+        self.assertEqual(step["args_expr"], ["{vars.myhwnd}"])
+
+    def test_maximize_rejects_extra_tokens(self):
+        with self.assertRaises(author_test.StepParseError):
+            parse_step_line("maximize win_hwnd extra")
+
 
 class ApplyCaptureTests(unittest.TestCase):
     def test_cols_and_rows_cols_selectors(self):

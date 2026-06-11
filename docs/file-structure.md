@@ -157,6 +157,16 @@ validate console output without OCR.
 read_console.py <hwnd>
 ```
 
+### `maximize_window.py` — maximize a window (skip if already maximized)
+Maximizes a window by `hwnd`. Restores it first if minimised, then maximizes.
+If the window is **already maximized** it is left unchanged and `already
+maximized hwnd=<n> ...` is printed (still exit 0). Exits 1 if the hwnd does not
+exist. Mirrors `activate_window.py`'s pywinauto/`--backend`/`--settle-ms` style.
+
+```
+maximize_window.py <hwnd> [--backend uia|win32] [--settle-ms 100]
+```
+
 ### `assert_file_exists.py` — file existence / content assertions
 Asserts a file exists (or, with `--negate`, does not), optionally checking
 that it contains a given substring, and optionally deleting it afterwards
