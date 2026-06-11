@@ -44,7 +44,7 @@ steps:
   - id: launch_browser
     type: browser_launch
     description: "Launch a fresh Microsoft Edge with a CDP debugging port."
-    script: scripts/browser_launch.py
+    script: scripts/web/browser_launch.py
     args_expr: ["{inputs.start_url}", "--browser", "edge", "--fresh", "--port", "{inputs.port}"]
     capture:
       vars.edge_pid: "$.cols[0]"
@@ -53,7 +53,7 @@ steps:
   - id: locate_window
     type: find_window
     description: "Locate the freshly launched Edge window by its pid (title-independent)."
-    script: scripts/find_window.py
+    script: scripts/window/find_window.py
     args_expr: ["Microsoft.*Edge", "--pid", "{vars.edge_pid}"]
     capture:
       vars.edge_hwnd: "$.cols[1]"
@@ -61,87 +61,87 @@ steps:
   - id: maximize
     type: maximize_window
     description: "Maximize the Edge window first, before loading content."
-    script: scripts/maximize_window.py
+    script: scripts/window/maximize_window.py
     args_expr: ["{vars.edge_hwnd}"]
     wait_after: settle_ms
 
   - id: activate
     type: activate_window
     description: "Bring the Edge window to the foreground for full-screen capture."
-    script: scripts/activate_window.py
+    script: scripts/window/activate_window.py
     args_expr: ["{vars.edge_hwnd}"]
     wait_after: settle_ms
 
   - id: ensure_home_loaded
     type: browser_goto
     description: "Load the PropertyGuru home page at the maximized window size."
-    script: scripts/browser_goto.py
+    script: scripts/web/browser_goto.py
     args_expr: ["{inputs.start_url}", "--port", "{inputs.port}", "--load-timeout-ms", "{inputs.load_timeout_ms}"]
     wait_after: page_load_ms
 
   - id: accept_cookies
     type: dom_interact
     description: "Dismiss the cookie-consent banner shown on first visit."
-    script: scripts/dom_interact.py
+    script: scripts/web/dom_interact.py
     args_expr: ["click", "--selector", "[da-id=accept-cookies-button]", "--port", "{inputs.port}"]
     wait_after: after_cookie_ms
 
   - id: shot_home
     type: screenshot
     description: "Full-screen screenshot of the PropertyGuru home page."
-    script: scripts/screenshot.py
+    script: scripts/files/screenshot.py
     args_expr: ["{artifacts.screenshot_dir}/01_home.png"]
 
   - id: open_search
     type: dom_interact
     description: "Click the search bar to open the location-search overlay."
-    script: scripts/dom_interact.py
+    script: scripts/web/dom_interact.py
     args_expr: ["click", "--selector", "[da-id=search-box-input]", "--port", "{inputs.port}"]
     wait_after: open_search_ms
 
   - id: type_query
     type: dom_interact
     description: "Type the search text into the (editable) overlay search input."
-    script: scripts/dom_interact.py
+    script: scripts/web/dom_interact.py
     args_expr: ["type", "--selector", "[da-id=search-box-input]:not([readonly])", "--value", "{inputs.search_text}", "--port", "{inputs.port}"]
     wait_after: after_type_ms
 
   - id: validate_suggestion
     type: dom_query
     description: "Confirm the location autocomplete shows a matching suggestion."
-    script: scripts/dom_query.py
+    script: scripts/web/dom_query.py
     args_expr: ["--selector", ".dropdown-item.found-locations-view-item-root", "--port", "{inputs.port}", "--expect-min", "1", "--contains", "{inputs.search_text}"]
 
   - id: pick_suggestion
     type: dom_interact
     description: "Select the first location suggestion."
-    script: scripts/dom_interact.py
+    script: scripts/web/dom_interact.py
     args_expr: ["click", "--selector", ".dropdown-item.found-locations-view-item-root", "--port", "{inputs.port}"]
     wait_after: after_pick_ms
 
   - id: submit_search
     type: dom_interact
     description: "Click the search button to run the search."
-    script: scripts/dom_interact.py
+    script: scripts/web/dom_interact.py
     args_expr: ["click", "--selector", "[da-id=search-button]", "--port", "{inputs.port}"]
     wait_after: after_submit_ms
 
   - id: validate_results
     type: dom_query
     description: "Confirm at least one listing card rendered on the results page."
-    script: scripts/dom_query.py
+    script: scripts/web/dom_query.py
     args_expr: ["--selector", "[da-id=parent-listing-card-v2-regular]", "--port", "{inputs.port}", "--url-contains", "property-for-sale", "--expect-min", "1"]
 
   - id: shot_results
     type: screenshot
     description: "Full-screen screenshot of the search results page."
-    script: scripts/screenshot.py
+    script: scripts/files/screenshot.py
     args_expr: ["{artifacts.screenshot_dir}/02_results.png"]
 
   - id: capture_first_listing
     type: dom_query
     description: "Capture the first listing card's detail-page URL (href)."
-    script: scripts/dom_query.py
+    script: scripts/web/dom_query.py
     args_expr: ["--selector", "[da-id=parent-listing-card-v2-regular] a:has([da-id=listing-card-v2-title])", "--port", "{inputs.port}", "--url-contains", "property-for-sale", "--attr", "href"]
     capture:
       vars.first_url: "$.cols[0]"
@@ -149,26 +149,26 @@ steps:
   - id: open_first_listing
     type: browser_goto
     description: "Open the first listing's detail page in the same tab."
-    script: scripts/browser_goto.py
+    script: scripts/web/browser_goto.py
     args_expr: ["{vars.first_url}", "--port", "{inputs.port}", "--load-timeout-ms", "{inputs.load_timeout_ms}"]
     wait_after: after_nav_ms
 
   - id: validate_listing
     type: dom_query
     description: "Confirm the listing detail page loaded (agent contact card present)."
-    script: scripts/dom_query.py
+    script: scripts/web/dom_query.py
     args_expr: ["--selector", "[da-id=contact-agent-card]", "--port", "{inputs.port}", "--url-contains", "property-listing", "--expect-min", "1"]
 
   - id: shot_listing
     type: screenshot
     description: "Full-screen screenshot of the first listing's detail page."
-    script: scripts/screenshot.py
+    script: scripts/files/screenshot.py
     args_expr: ["{artifacts.screenshot_dir}/03_listing.png"]
 
   - id: collect_name
     type: dom_query
     description: "Read the property name (project + address line) from the listing."
-    script: scripts/dom_query.py
+    script: scripts/web/dom_query.py
     args_expr: ["--selector", "[da-id=property-address]", "--port", "{inputs.port}", "--url-contains", "property-listing", "--attr", "innerText"]
     capture:
       vars.listing_name: "$.cols[0]"
@@ -176,7 +176,7 @@ steps:
   - id: collect_price
     type: dom_query
     description: "Read the listing price."
-    script: scripts/dom_query.py
+    script: scripts/web/dom_query.py
     args_expr: ["--selector", "[da-id=property-price]", "--port", "{inputs.port}", "--url-contains", "property-listing", "--attr", "innerText"]
     capture:
       vars.listing_price: "$.cols[0]"
@@ -184,7 +184,7 @@ steps:
   - id: collect_agent
     type: dom_query
     description: "Read the listing agent (owner-equivalent) name."
-    script: scripts/dom_query.py
+    script: scripts/web/dom_query.py
     args_expr: ["--selector", "[da-id=agent-name]", "--port", "{inputs.port}", "--url-contains", "property-listing", "--attr", "innerText"]
     capture:
       vars.agent_name: "$.cols[0]"
@@ -192,7 +192,7 @@ steps:
   - id: collect_phone
     type: dom_eval
     description: "Read the agent mobile from the page's embedded Next.js data (the UI hides it behind an OTP/login modal)."
-    script: scripts/dom_eval.py
+    script: scripts/web/dom_eval.py
     args_expr: ["--expr", "window.__NEXT_DATA__?.props?.pageProps?.pageData?.data?.contactAgentData?.contactAgentCard?.agentInfoProps?.agent?.mobile", "--port", "{inputs.port}", "--url-contains", "property-listing"]
     capture:
       vars.agent_phone: "$.cols[0]"
@@ -200,7 +200,7 @@ steps:
   - id: make_notes_file
     type: write_text
     description: "Pre-create the empty notes file so Notepad opens it path-bound (Ctrl+S saves with no Save-As dialog)."
-    script: scripts/write_text.py
+    script: scripts/files/write_text.py
     args_expr: ["--out", "{artifacts.notes_file}"]
     capture:
       vars.notes_path: "$.cols[0]"
@@ -208,7 +208,7 @@ steps:
   - id: launch_notepad
     type: launch
     description: "Open the (empty) notes file in the Notepad app."
-    script: scripts/launch.py
+    script: scripts/window/launch.py
     args_expr: ["notepad", "--wait-window", "Notepad", "--args", "{vars.notes_path}"]
     capture:
       vars.notepad_hwnd: "$.cols[1]"
@@ -217,88 +217,88 @@ steps:
   - id: focus_notepad
     type: activate_window
     description: "Bring Notepad to the foreground so typed text lands in it."
-    script: scripts/activate_window.py
+    script: scripts/window/activate_window.py
     args_expr: ["{vars.notepad_hwnd}"]
     wait_after: settle_ms
 
   - id: type_property
     type: type_text
     description: "Type the property name line."
-    script: scripts/type_text.py
+    script: scripts/input/type_text.py
     args_expr: ["Property: {vars.listing_name}", "--interval", "0.06"]
     wait_after: type_line_ms
 
   - id: nl_after_property
     type: key
     description: "Newline."
-    script: scripts/key.py
+    script: scripts/input/key.py
     args_expr: ["enter"]
     wait_after: type_line_ms
 
   - id: type_price
     type: type_text
     description: "Type the price line."
-    script: scripts/type_text.py
+    script: scripts/input/type_text.py
     args_expr: ["Price: {vars.listing_price}", "--interval", "0.06"]
     wait_after: type_line_ms
 
   - id: nl_after_price
     type: key
     description: "Newline."
-    script: scripts/key.py
+    script: scripts/input/key.py
     args_expr: ["enter"]
     wait_after: type_line_ms
 
   - id: type_owner
     type: type_text
     description: "Type the owner/agent line."
-    script: scripts/type_text.py
+    script: scripts/input/type_text.py
     args_expr: ["Owner/Agent: {vars.agent_name}", "--interval", "0.06"]
     wait_after: type_line_ms
 
   - id: nl_after_owner
     type: key
     description: "Newline."
-    script: scripts/key.py
+    script: scripts/input/key.py
     args_expr: ["enter"]
     wait_after: type_line_ms
 
   - id: type_phone
     type: type_text
     description: "Type the phone-number line."
-    script: scripts/type_text.py
+    script: scripts/input/type_text.py
     args_expr: ["Phone: {vars.agent_phone}", "--interval", "0.06"]
     wait_after: type_line_ms
 
   - id: save_notes
     type: key
     description: "Save the file (Ctrl+S writes directly to the bound path)."
-    script: scripts/key.py
+    script: scripts/input/key.py
     args_expr: ["ctrl+s"]
     wait_after: after_save_ms
 
   - id: shot_notes
     type: screenshot
     description: "Full-screen screenshot of the saved details in Notepad."
-    script: scripts/screenshot.py
+    script: scripts/files/screenshot.py
     args_expr: ["{artifacts.screenshot_dir}/04_notes.png"]
 
   - id: assert_notes
     type: assert_file_exists
     description: "Confirm the notes file was saved and contains the collected fields."
-    script: scripts/assert_file_exists.py
+    script: scripts/files/assert_file_exists.py
     args_expr: ["{vars.notes_path}", "--contains", "Phone:"]
 
   - id: close_notepad
     type: close_window
     description: "Close the Notepad window."
-    script: scripts/close_window.py
+    script: scripts/window/close_window.py
     args_expr: ["{vars.notepad_hwnd}", "--force"]
 
   - id: close_browser
     type: close_window
     description: "Close the Edge window to clean up."
-    script: scripts/close_window.py
+    script: scripts/window/close_window.py
     args_expr: ["{vars.edge_hwnd}", "--force"]
 
 expected_results:

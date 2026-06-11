@@ -67,14 +67,14 @@ SPEC_KEY_ORDER = [
 ]
 
 SCRIPT_BY_TYPE = {
-    "key": "scripts/key.py",
-    "type_text": "scripts/type_text.py",
-    "click": "scripts/click.py",
-    "find_window": "scripts/find_window.py",
-    "find_control": "scripts/find_control.py",
-    "assert_file": "scripts/assert_file_exists.py",
-    "screenshot": "scripts/screenshot.py",
-    "maximize_window": "scripts/maximize_window.py",
+    "key": "scripts/input/key.py",
+    "type_text": "scripts/input/type_text.py",
+    "click": "scripts/input/click.py",
+    "find_window": "scripts/window/find_window.py",
+    "find_control": "scripts/uia/find_control.py",
+    "assert_file": "scripts/files/assert_file_exists.py",
+    "screenshot": "scripts/files/screenshot.py",
+    "maximize_window": "scripts/window/maximize_window.py",
 }
 
 
@@ -121,7 +121,7 @@ class RecurrenceHalt(Exception):
 
 def _capture_ui_fingerprint() -> Optional[str]:
     """Run ``scripts/ui_fingerprint.py`` and return the digest, or ``None``."""
-    script = os.path.join(_REPO_ROOT, "scripts", "ui_fingerprint.py")
+    script = os.path.join(_REPO_ROOT, "scripts", "uia", "ui_fingerprint.py")
     if not os.path.exists(script):
         return None
     try:
