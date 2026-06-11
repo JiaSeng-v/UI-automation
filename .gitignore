@@ -5,6 +5,9 @@ __pycache__/
 
 # Run artifacts
 screenshots/
+# Chrome remote-debugging profile used by browser_launch.py
+.browser-profile/
+.browser-profile-edge/
 
 # OS / editor
 Thumbs.db
