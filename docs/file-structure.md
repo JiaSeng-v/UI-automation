@@ -121,13 +121,13 @@ screenshot.py <out_path> [--region X Y W H]
 ### `find_window.py` — locate a top-level window
 Iterates all desktop windows (via `uia`, `win32`, or `any`, de-duplicating by
 handle) and returns those whose title matches a regex (optionally filtered by
-class name). Results are sorted by `(pid, hwnd)` so numbered candidate lists
-are reproducible. Prints tab-separated
+class name or owning process id via `--pid`). Results are sorted by `(pid, hwnd)`
+so numbered candidate lists are reproducible. Prints tab-separated
 `pid hwnd left top right bottom title`. Exits **1** if nothing matches — used
 by specs to assert a window is *gone* (`expect_exit: 1`).
 
 ```
-find_window.py <title_regex> [--class CLASS] [--backend uia|win32|any]
+find_window.py <title_regex> [--class CLASS] [--pid PID] [--backend uia|win32|any]
                               [--all | --nth N]
 ```
 
@@ -198,6 +198,90 @@ See [`authoring-scenarios.md`](authoring-scenarios.md) for the workflow.
 author_test.py <out_yaml>
 ```
 
+### Web-page helpers (raw Chrome DevTools Protocol)
+These drive a Chrome launched normally with only `--remote-debugging-port` (no
+automation switches, so `navigator.webdriver` stays `false`), attaching over raw
+CDP. Each helper reconnects to the long-running browser, since runner steps are
+separate subprocesses. All take `--port` (default `9222`) and optional
+`--url-contains` to select a page target.
+
+#### `cdp_client.py` — shared CDP module (not a step)
+Connection plumbing imported by the helpers below: `list_targets()`,
+`select_page_target()`, `wait_ready()`, and a `CDPSession` websocket wrapper with
+`send()`/`evaluate()`. Pure helpers are unit-tested in `tests/test_cdp_client.py`.
+
+#### `browser_launch.py` — start Chrome/Edge with a debug port
+Locates the browser (`--browser chrome|edge`), launches it with
+`--remote-debugging-port` and a fixed `--user-data-dir` (default
+`.browser-profile/` or `.browser-profile-edge/`, gitignored), and polls until the
+CDP endpoint answers. `--fresh` wipes the profile dir first for a clean browser.
+Launch flags suppress first-run, default-browser, and sign-in/sync prompts so
+they don't overlay the page. Prints the launched **pid on its own first line**
+(capture via `$.cols[0]`) followed by `port`/`pid`/`endpoint`.
+
+```
+browser_launch.py [url] [--browser chrome|edge] [--fresh] [--port 9222] [--user-data-dir DIR] [--chrome PATH]
+```
+
+#### `browser_goto.py` — navigate to a URL
+`Page.navigate` to a URL, then waits for `document.readyState === 'complete'`.
+Prints the final `url` and `title`.
+
+```
+browser_goto.py <url> [--port 9222] [--load-timeout-ms 15000]
+```
+
+#### `dom_get_html.py` — read page/element HTML
+Writes the `outerHTML` (or `--text` `innerText`) of the document or `--selector`
+to `--out`, printing `bytes`/`path`. Exit 1 if the selector matches nothing.
+
+```
+dom_get_html.py --out PATH [--selector CSS] [--text] [--port 9222]
+```
+
+#### `dom_interact.py` — click / type / press on an element
+Performs `action` (click/type/set/press/select) on a CSS `--selector` using
+trusted CDP `Input.dispatch*` events. Exit 1 if not found/interactable.
+
+```
+dom_interact.py <click|type|set|press|select> [--selector CSS] [--value V] [--port 9222]
+```
+
+#### `dom_query.py` — validate where to interact
+Reports `count`/`visible`/`text`/bounding-box for a `--selector`. Assertion flags
+`--expect-min`, `--visible`, `--contains` make it exit 1 on failure.
+
+```
+dom_query.py --selector CSS [--expect-min N] [--visible] [--contains TEXT] [--attr NAME] [--port 9222]
+```
+
+`--attr NAME` reads an attribute (e.g. `href`) of the first match and prints its
+raw value as the **first** output line, so a spec can capture it cleanly with
+`$.cols[0]`; the usual `count=...` line follows. `--attr innerText` works too
+(non-attribute property names fall back to `el[NAME]`), giving a clean text capture.
+
+#### `dom_eval.py` — evaluate a JS expression on the page
+Evaluates `--expr` (a JavaScript expression) on the active CDP page and prints the
+result as the **first** output line (capture via `$.cols[0]`); a `type=<js-type>`
+line follows. Objects are printed as compact JSON; a `null`/`undefined` result
+exits 1. Use it when the value isn't addressable as an element/attribute — e.g. a
+field inside `window.__NEXT_DATA__`.
+
+```
+dom_eval.py --expr JS [--url-contains S] [--port 9222]
+```
+
+#### `write_text.py` — create / write a text file
+Writes `--text` (default empty; `\n` becomes a newline) to `--out`, creating parent
+dirs, and prints the file's **absolute path** as the first line (capture via
+`$.cols[0]`), then `bytes=<n>`. `--append` appends instead of overwriting. Handy for
+pre-creating an empty file so a GUI editor (e.g. Notepad) can open it *path-bound*
+and save with Ctrl+S (no Save-As dialog to automate).
+
+```
+write_text.py --out PATH [--text STR] [--append]
+```
+
 ## `docs/`
 
 | File | Purpose |
@@ -217,3 +301,4 @@ scenario; new scenarios drop in here alongside the existing example.
 | File | Purpose |
 |---|---|
 | `powershell_echo_loop.yaml` | Reference scenario: opens PowerShell from the Start menu, echoes four fixed strings, validates each via UIA, screenshots each iteration, then closes the window by clicking the UIA-located Close button. |
+| `propertyguru_search_edge.yaml` | Web-automation sample: launches a fresh Microsoft Edge over CDP, loads PropertyGuru (MY), screenshots the home page, searches "Batu Kawan", screenshots the results, opens the first listing, and screenshots its detail page. Targets a live external site, so it is intentionally **not** bit-reproducible. |
