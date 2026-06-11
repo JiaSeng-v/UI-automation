@@ -1,6 +1,7 @@
 name: propertyguru_search_edge
 description: >
-  Open a fresh Microsoft Edge and immediately maximize the window, then go to
+  Open Microsoft Edge using a clone of your real Edge profile (so your existing
+  logins/cookies carry over) and immediately maximize the window, then go to
   PropertyGuru Malaysia, screenshot the home page, search for "Batu Kawan"
   (resolves to the Batu Kawan, Penang location), screenshot the search results,
   then open the first listing and screenshot its detail page. From that listing
@@ -43,16 +44,16 @@ steps:
 
   - id: launch_browser
     type: browser_launch
-    description: "Launch a fresh Microsoft Edge with a CDP debugging port."
+    description: "Launch Microsoft Edge (cloned from your real profile) with a CDP debugging port."
     script: scripts/web/browser_launch.py
-    args_expr: ["{inputs.start_url}", "--browser", "edge", "--fresh", "--port", "{inputs.port}"]
+    args_expr: ["{inputs.start_url}", "--browser", "edge", "--clone", "--port", "{inputs.port}"]
     capture:
       vars.edge_pid: "$.cols[0]"
     wait_after: after_launch_ms
 
   - id: locate_window
     type: find_window
-    description: "Locate the freshly launched Edge window by its pid (title-independent)."
+    description: "Locate the launched Edge window by its pid (title-independent)."
     script: scripts/window/find_window.py
     args_expr: ["Microsoft.*Edge", "--pid", "{vars.edge_pid}"]
     capture:
@@ -81,9 +82,9 @@ steps:
 
   - id: accept_cookies
     type: dom_interact
-    description: "Dismiss the cookie-consent banner shown on first visit."
+    description: "Dismiss the cookie-consent banner if shown (absent when consent is already stored in the profile)."
     script: scripts/web/dom_interact.py
-    args_expr: ["click", "--selector", "[da-id=accept-cookies-button]", "--port", "{inputs.port}"]
+    args_expr: ["click", "--selector", "[da-id=accept-cookies-button]", "--port", "{inputs.port}", "--optional"]
     wait_after: after_cookie_ms
 
   - id: shot_home
@@ -209,7 +210,7 @@ steps:
     type: launch
     description: "Open the (empty) notes file in the Notepad app."
     script: scripts/window/launch.py
-    args_expr: ["notepad", "--wait-window", "Notepad", "--args", "{vars.notes_path}"]
+    args_expr: ["notepad", "--wait-window", "listing_details.txt - Notepad", "--args", "{vars.notes_path}"]
     capture:
       vars.notepad_hwnd: "$.cols[1]"
     wait_after: notepad_open_ms
@@ -225,7 +226,7 @@ steps:
     type: type_text
     description: "Type the property name line."
     script: scripts/input/type_text.py
-    args_expr: ["Property: {vars.listing_name}", "--interval", "0.06"]
+    args_expr: ["Property: {vars.listing_name}", "--interval", "0.03"]
     wait_after: type_line_ms
 
   - id: nl_after_property
@@ -239,7 +240,7 @@ steps:
     type: type_text
     description: "Type the price line."
     script: scripts/input/type_text.py
-    args_expr: ["Price: {vars.listing_price}", "--interval", "0.06"]
+    args_expr: ["Price: {vars.listing_price}", "--interval", "0.03"]
     wait_after: type_line_ms
 
   - id: nl_after_price
@@ -253,7 +254,7 @@ steps:
     type: type_text
     description: "Type the owner/agent line."
     script: scripts/input/type_text.py
-    args_expr: ["Owner/Agent: {vars.agent_name}", "--interval", "0.06"]
+    args_expr: ["Owner/Agent: {vars.agent_name}", "--interval", "0.03"]
     wait_after: type_line_ms
 
   - id: nl_after_owner
@@ -267,7 +268,7 @@ steps:
     type: type_text
     description: "Type the phone-number line."
     script: scripts/input/type_text.py
-    args_expr: ["Phone: {vars.agent_phone}", "--interval", "0.06"]
+    args_expr: ["Phone: {vars.agent_phone}", "--interval", "0.03"]
     wait_after: type_line_ms
 
   - id: save_notes
@@ -302,7 +303,7 @@ steps:
     args_expr: ["{vars.edge_hwnd}", "--force"]
 
 expected_results:
-  - "A fresh Microsoft Edge launches on the configured CDP port, is located by PID, and is maximized + foregrounded before PropertyGuru loads."
+  - "Microsoft Edge launches on the configured CDP port using a clone of your real profile, is located by PID, and is maximized + foregrounded before PropertyGuru loads."
   - "01_home.png captures the PropertyGuru Malaysia home page."
   - "Searching 'Batu Kawan' resolves to the Batu Kawan, Penang location and shows >=1 listing."
   - "02_results.png captures the search results page."
