@@ -127,6 +127,10 @@ def main():
     p.add_argument("--value", default="", help="text/key/option value for the action")
     p.add_argument("--port", type=int, default=9222)
     p.add_argument("--url-contains", dest="url_contains", default=None)
+    p.add_argument("--optional", action="store_true",
+                   help="if the selector matches no element, exit 0 (no-op) "
+                        "instead of failing; useful for elements that may be "
+                        "absent (e.g. a cookie banner already dismissed)")
     a = p.parse_args()
 
     if a.action != "press" and not a.selector:
@@ -154,6 +158,10 @@ def main():
         print(f"ERROR: {e}", file=sys.stderr); sys.exit(1)
 
     if not ok:
+        if a.optional:
+            print(f"ok action={a.action} selector={a.selector!r} "
+                  f"(optional: no element, skipped)")
+            return
         print(f"ERROR: selector {a.selector!r} matched no element", file=sys.stderr)
         sys.exit(1)
 
