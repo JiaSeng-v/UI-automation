@@ -20,7 +20,7 @@ For Copilot-only tweaks, add `.github/copilot-instructions.md` (Copilot ignores 
 
 | Situation | Recommended workflow |
 |---|---|
-| Brand-new scenario, unknown UIA tree | **REPL-first** — use `scripts/author_test.py` to capture real selectors live, then ask the agent to refactor / extend. |
+| Brand-new scenario, unknown UIA tree | **REPL-first** — use `scripts/authoring/author_test.py` to capture real selectors live, then ask the agent to refactor / extend. |
 | Variant of an existing scenario | **Agent-first** — point the agent at the nearest existing YAML in `test_cases/` and have it produce a new file. |
 | Bulk parameter sweep | **Agent-first** — describe the inputs table; the agent fills `inputs` + a `foreach` block. |
 

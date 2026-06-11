@@ -22,11 +22,7 @@ A test case is a YAML file with these top-level keys:
 
 ### Web-page steps (raw Chrome DevTools Protocol)
 
-These drive a Chrome launched normally with only `--remote-debugging-port` (no
-automation switches, so `navigator.webdriver` stays `false`). State lives in the
-long-running Chrome; each step reconnects over CDP. All accept `--port` (default
-`9222`) and an optional `--url-contains` to pick a specific page target. See
-[reproducibility](reproducibility.md) for the fixed `--user-data-dir`.
+These drive a Chrome launched normally with only `--remote-debugging-port` (no automation switches, so `navigator.webdriver` stays `false`). State lives in the long-running Chrome; each step reconnects over CDP. All accept `--port` (default `9222`) and an optional `--url-contains` to pick a specific page target. See [reproducibility](reproducibility.md) for the fixed `--user-data-dir`.
 
 | `type` | Calls | Notes |
 |---|---|---|
@@ -38,11 +34,9 @@ long-running Chrome; each step reconnects over CDP. All accept `--port` (default
 | `dom_eval` | `dom_eval.py` | Evaluates a JS `--expr` on the page and prints the result as the first output line (capture via `$.cols[0]`); objects become compact JSON. Null/undefined exits 1. Use for values not addressable as elements/attributes (e.g. inside `window.__NEXT_DATA__`). |
 | `write_text` | `write_text.py` | Writes `--text` (default empty; `\n` → newline) to `--out`, makes parent dirs, prints the **absolute** path as the first line (capture via `$.cols[0]`). `--append` to append. Useful to pre-create a path-bound file for a GUI editor to save. |
 
-
 ## Placeholders
 
-`{path.to.value}` resolves against `inputs`, `artifacts`, `vars` (captured
-from earlier steps), and loop locals. Simple integer arithmetic works:
+`{path.to.value}` resolves against `inputs`, `artifacts`, `vars` (captured from earlier steps), and loop locals. Simple integer arithmetic works:
 
 ```yaml
 args_expr: ["{vars.win_left + 100}", "{vars.win_top + 60}"]
@@ -58,16 +52,14 @@ capture:
 
 ## Pass / fail screenshot variants
 
-`screenshot` accepts `args_expr_on_pass` and `args_expr_on_fail`, so failed
-iterations are saved under a different filename:
+`screenshot` accepts `args_expr_on_pass` and `args_expr_on_fail`, so failed iterations are saved under a different filename:
 
 ```yaml
 - id: snapshot
   type: screenshot
-  script: scripts/screenshot.py
+  script: scripts/files/screenshot.py
   args_expr_on_pass: ["{artifacts.screenshot_dir}/iter_{n}.png"]
   args_expr_on_fail: ["{artifacts.screenshot_dir}/iter_{n}_FAIL.png"]
 ```
 
-See [`test_cases/powershell_echo_loop.yaml`](../test_cases/powershell_echo_loop.yaml)
-for a complete worked example.
+See [`test_cases/powershell_echo_loop.yaml`](../test_cases/powershell_echo_loop.yaml) for a complete worked example.
