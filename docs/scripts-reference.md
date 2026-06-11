@@ -21,10 +21,11 @@ These drive a Chrome/Edge launched normally with only `--remote-debugging-port` 
 Connection plumbing imported by the helpers below: `list_targets()`, `select_page_target()`, `wait_ready()`, and a `CDPSession` websocket wrapper with `send()`/`evaluate()`. Pure helpers are unit-tested in `tests/test_cdp_client.py`. Lives alongside the other `web/` scripts so they can `import cdp_client` directly.
 
 ### `browser_launch.py` — start Chrome/Edge with a debug port
-Locates the browser (`--browser chrome|edge`), launches it with `--remote-debugging-port` and a fixed `--user-data-dir` (default `.browser-profile/` or `.browser-profile-edge/`, gitignored), and polls until the CDP endpoint answers. `--fresh` wipes the profile dir first. Prints the launched **pid on its own first line** (capture via `$.cols[0]`).
+Locates the browser (`--browser chrome|edge`), launches it with `--remote-debugging-port` and a fixed `--user-data-dir` (default `.browser-profile/` or `.browser-profile-edge/`, gitignored), and polls until the CDP endpoint answers. `--fresh` wipes the profile dir first. `--clone` instead seeds the profile dir from your real browser profile (`%LocalAppData%\Microsoft\Edge\User Data` etc.) so your existing logins/cookies carry over without touching the live profile — it defaults to a `.browser-profile[-edge]-clone/` dir and clones only when that dir is empty (use `--fresh` to force a re-clone, or `--clone-from PATH` to pick a different source). Prints the launched **pid on its own first line** (capture via `$.cols[0]`).
 
 ```
-browser_launch.py [url] [--browser chrome|edge] [--fresh] [--port 9222] [--user-data-dir DIR] [--chrome PATH]
+browser_launch.py [url] [--browser chrome|edge] [--fresh] [--clone] [--clone-from DIR]
+                  [--port 9222] [--user-data-dir DIR] [--chrome PATH]
 ```
 
 ### `browser_goto.py` — navigate to a URL
