@@ -66,10 +66,18 @@ def find_descendant(root, name, auto_id, control_type, cls, match_mode):
 
 def read_value(elem, joiner):
     value = ""
+    # For ComboBox controls, try selected_text() first
     try:
-        value = elem.window_text() or ""
+        ct = elem.element_info.control_type or ""
+        if ct == "ComboBox" and hasattr(elem, "selected_text"):
+            value = elem.selected_text() or ""
     except Exception:
         pass
+    if not value:
+        try:
+            value = elem.window_text() or ""
+        except Exception:
+            pass
     if not value:
         try:
             segments = elem.texts() or []
