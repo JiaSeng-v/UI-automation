@@ -1,9 +1,11 @@
 name: vs_console_app_validation
 description: >
-  Launch Visual Studio from Start menu, create a new C# Console App project
-  with default settings, capture the framework value, then validate Target
-  Framework and Output Type in project Properties and .csproj file. Build
-  and run the solution, verifying success at each stage.
+  Launch Visual Studio (or Visual Studio Insiders) from Start menu, create a
+  new C# Console App project with default settings, capture the framework
+  value, then validate Target Framework and Output Type in project Properties
+  and .csproj file. Build and run the solution, verifying success at each
+  stage, then maximize the editor window after creation and close the opened
+  windows on completion.
 
 inputs:
   search_text: "console app"
@@ -33,6 +35,7 @@ timing:
   after_enter_ms: 3000
   validate_poll_total_ms: 10000
   validate_poll_interval_ms: 500
+  after_close_ms: 1500
 
 steps:
 
@@ -61,9 +64,9 @@ steps:
 
   - id: find_vs_main_window
     type: find_window
-    description: "Locate the VS main window (largest Microsoft Visual Studio window)."
+    description: "Locate the VS main window (Microsoft Visual Studio or Visual Studio Insiders)."
     script: scripts/window/find_window.py
-    args: ["^Microsoft Visual Studio$", "--backend", "uia"]
+    args: ["^Microsoft Visual Studio( Insiders)?$", "--backend", "uia"]
     capture:
       vars.vs_hwnd: "$.cols[1]"
       vars.vs_left: "$.cols[2]"
@@ -220,6 +223,12 @@ steps:
     args: ["Microsoft Visual Studio", "--backend", "uia"]
     capture:
       vars.vs_hwnd: "$.cols[1]"
+
+  - id: maximize_vs_editor
+    type: maximize
+    description: "Maximize the Visual Studio window after the project is created."
+    script: scripts/window/maximize_window.py
+    args_expr: ["{vars.vs_hwnd}"]
 
   # --- Open Solution Explorer ---
 
@@ -459,9 +468,26 @@ steps:
     script: scripts/files/screenshot.py
     args_expr: ["{artifacts.screenshot_dir}/run_success.png"]
 
+  # --- Cleanup: close opened windows ---
+
+  - id: close_debug_console
+    type: close_window
+    description: "Close the Debug Console window opened by the run."
+    script: scripts/window/close_window.py
+    args_expr: ["{vars.debug_hwnd}", "--force"]
+    wait_after: after_close_ms
+
+  - id: close_visual_studio
+    type: close_window
+    description: "Close the Visual Studio window to clean up."
+    script: scripts/window/close_window.py
+    args_expr: ["{vars.vs_hwnd}", "--force"]
+    wait_after: after_close_ms
+
 expected_results:
-  - "Visual Studio launched from Start menu and window located."
+  - "Visual Studio (or Visual Studio Insiders) launched from Start menu and window located."
   - "New C# Console App project created with default settings."
+  - "Visual Studio window maximized after project creation."
   - "Framework value captured from Additional Information dialog."
   - "Target Framework in Properties matches captured framework value."
   - "Output Type in Properties is Console Application."
@@ -469,3 +495,4 @@ expected_results:
   - "Build Solution completes with 'Build succeeded' in Output window."
   - "Solution runs successfully with exit code 0."
   - "Screenshots saved at each validation checkpoint."
+  - "Debug Console and Visual Studio windows closed on completion."
