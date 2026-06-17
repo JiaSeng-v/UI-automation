@@ -49,6 +49,22 @@ uv run python -m unittest discover -s tests -v
 
 If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any other agent that reads `AGENTS.md`) installed, you can drive the toolkit conversationally. The repo's [`AGENTS.md`](AGENTS.md) is auto-loaded and contains the rules the agent must follow when authoring or editing test cases. For the human-facing workflow and example prompts, see [`docs/copilot-cli-test-authoring.md`](docs/copilot-cli-test-authoring.md).
 
+### Install the Copilot CLI
+
+Don't have it yet? Run the bundled installer. It sets up **both** the standalone agentic `copilot` CLI and the `gh copilot` extension (whichever is missing), then walks you through login:
+
+```powershell
+.\install-copilot.ps1
+```
+
+Or one-line, straight from GitHub:
+
+```powershell
+irm https://raw.githubusercontent.com/william051200/UI-automation/main/install-copilot.ps1 | iex
+```
+
+Pass `-NoLogin` to install without the interactive sign-in prompts.
+
 ### Token-efficient Copilot usage
 
 Driving the runner through Copilot CLI is convenient but costs LLM tokens per turn. To keep costs low without changing test behavior:

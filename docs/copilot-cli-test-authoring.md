@@ -7,7 +7,12 @@ The **rules** the agent must follow live in [`AGENTS.md`](../AGENTS.md) at the r
 ## Prerequisites
 
 - Repo installed per the [README](../README.md) (`uv`, Python, deps).
-- `gh` CLI with the Copilot extension installed and authenticated.
+- A GitHub Copilot CLI installed and authenticated. The quickest path is the bundled
+  installer from the repo root, which sets up both the standalone `copilot` CLI and the
+  `gh copilot` extension and walks you through login:
+  ```powershell
+  .\install-copilot.ps1
+  ```
 - The target Windows app reachable from the Start menu (or with a known launch path).
 
 ## How the agent sees this repo

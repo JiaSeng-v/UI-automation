@@ -10,6 +10,7 @@ A guided tour of every file and folder in this repo, so you can find your way ar
 | `AGENTS.md` | Auto-loaded instructions for AI coding agents (Copilot CLI, Codex CLI, Cursor, Aider, Claude Code, …) working in this repo. Follows the [agents.md](https://agents.md/) convention. |
 | `LICENSE` | MIT license. |
 | `install.ps1` | One-line bootstrap installer for a fresh Windows machine (see [Entry points](#entry-points)). |
+| `install-copilot.ps1` | Optional installer for the GitHub Copilot CLI — sets up both the standalone `copilot` CLI and the `gh copilot` extension (whichever is missing) and triggers interactive login. |
 | `setup.ps1` | Local convenience wrapper that runs `uv sync` when `uv` is already installed. |
 | `run.ps1` | Thin shortcut wrapper: `.\run.ps1 <spec> [-q]` → `uv run python run_test.py <spec> [-q]`. Lets you invoke a scenario without going through an LLM. |
 | `run_test.py` | YAML test-spec runner (see [Entry points](#entry-points)). |
@@ -38,6 +39,17 @@ Zero-state bootstrap for a clean Windows 10/11 machine. In order it:
 5. Prints the example command to run the bundled scenario.
 
 Designed to be invoked via `irm https://raw.githubusercontent.com/william051200/UI-automation/main/install.ps1 | iex`.
+
+### `install-copilot.ps1`
+Optional, standalone installer for the GitHub Copilot CLI — useful for users whose machines
+don't have it set up yet. Idempotent; in order it:
+
+1. Installs the standalone agentic `copilot` CLI via `winget install GitHub.Copilot` (falling back to `npm install -g @github/copilot`, installing Node.js LTS first if needed).
+2. Installs the GitHub `gh` CLI via `winget` if missing.
+3. Installs (or upgrades) the `gh copilot` extension.
+4. Triggers interactive login: `gh auth login` if not already authenticated, then launches `copilot` so you can run its `/login` slash command.
+
+Pass `-NoLogin` to skip the sign-in prompts. Invoke locally with `.\install-copilot.ps1` or via `irm https://raw.githubusercontent.com/william051200/UI-automation/main/install-copilot.ps1 | iex`.
 
 ### `setup.ps1`
 Lightweight alternative for developers who already have `uv` installed. `cd`s to the repo, verifies `uv` is on `PATH`, runs `uv sync`, and prints the example command. Use `install.ps1` instead on a fresh machine.
