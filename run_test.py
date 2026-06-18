@@ -40,6 +40,7 @@ class Ctx:
         self.spec = spec
         self.vars = {}
         self.iter_failed = {}   # n -> bool, used by snapshot step
+        self.ss_counter = 1     # screenshot ordering counter, resets per foreach iteration
         ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%SZ")
         self.subs = {
             "timestamp": ts,
@@ -165,6 +166,7 @@ def exec_step(step, ctx, local_subs):
                 print(f"\n--- iter {i}: {var}={item!r} ---")
             local = {var: item, idx_var: i}
             ctx.iter_failed[i] = False
+            ctx.ss_counter = 1
             for sub in body:
                 try:
                     exec_step(sub, ctx, {**local_subs, **local})
@@ -204,7 +206,9 @@ def exec_step(step, ctx, local_subs):
         failed = ctx.iter_failed.get(n, False)
         key = "args_expr_on_fail" if failed else "args_expr_on_pass"
         raw = step.get(key) or step.get("args_expr") or step.get("args")
+        subs = dict(subs); subs["ss"] = f"ss{ctx.ss_counter}"
         args = [render(a, subs) for a in raw]
+        ctx.ss_counter += 1
         run_cmd(script, args, expect_exit=0)
         return
 

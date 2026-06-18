@@ -13,8 +13,8 @@ inputs:
 
 artifacts:
   screenshot_dir: "screenshots/{timestamp}"
-  screenshot_name: "iter_{n}.png"
-  fail_screenshot_name: "iter_{n}_FAIL.png"
+  screenshot_name: "{ss}_{n}.png"
+  fail_screenshot_name: "{ss}_{n}_FAIL.png"
 
 timing:
   after_win_key_ms: 700
@@ -102,10 +102,10 @@ steps:
 
       - id: snapshot
         type: screenshot
-        description: "Save iter_{n}.png (or iter_{n}_FAIL.png on prior failure)."
+        description: "Save ss1_{n}.png (or ss1_{n}_FAIL.png on prior failure)."
         script: scripts/files/screenshot.py
-        args_expr_on_pass: ["{artifacts.screenshot_dir}/iter_{n}.png"]
-        args_expr_on_fail: ["{artifacts.screenshot_dir}/iter_{n}_FAIL.png"]
+        args_expr_on_pass: ["{artifacts.screenshot_dir}/{ss}_{n}.png"]
+        args_expr_on_fail: ["{artifacts.screenshot_dir}/{ss}_{n}_FAIL.png"]
 
   - id: locate_close_button
     type: find_control
@@ -133,6 +133,6 @@ steps:
 expected_results:
   - "PowerShell window opened from Start menu within after_launch_enter_ms."
   - "All 4 echo_texts validated via UIA console read."
-  - "4 screenshots saved as screenshots/{timestamp}/iter_1..4.png."
+  - "4 screenshots saved as screenshots/{timestamp}/ss1_1..4.png."
   - "Close button located via UIA (Name=Close, ControlType=Button)."
   - "find_window after click returns exit code 1 (window gone)."
