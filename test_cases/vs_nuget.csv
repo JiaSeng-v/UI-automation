@@ -1,21 +1,62 @@
-Visual C# -> Windows Classic Desktop .NET Framework -> Windows Form App
+# CONFIG
+Section,Key,Value
+name,,vs_nuget
+description,,"Launch Visual Studio, create a C# Console App, open NuGet Package Manager, search and install Newtonsoft.Json, then build to verify the package is resolved."
+artifacts,screenshot_dir,screenshots/{timestamp}
 
-Visual Basic -> .NET Standard -> Class Library
-
-
-
-Open your project in Visual Studio.
-"In Solution Explorer, right-click on the project name (e.g., WindowsFormsApp1)."
-Link A to B
-"Select ""Manage NuGet Packages..."" from the context menu."
-In the NuGet Package Manager:  
-Go to the Browse tab.
-"Search for the package name (e.g., EasyPost.NetStandard)."
-"Select the desired package to view details, install, or update."
-build
-
-
-
-
+# STEPS
+No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,Expected
+1,Create .NET Console App,Open Start menu via Win key.,scripts/input/key.py,"[""win""]",700,,,,,,,,
+1,,Type 'Visual Studio' into Start menu search.,scripts/input/type_text.py,"[""Visual Studio"", ""--interval"", ""0.06""]",1500,,,,,,,,
+1,,Press Enter to launch Visual Studio.,scripts/input/key.py,"[""enter""]",20000,,,,,,,,Visual Studio opens.
+1,,Locate the VS main window; stash hwnd in vars.vs_hwnd.,scripts/window/find_window.py,"[""^Microsoft Visual Studio( Insiders)?$"", ""--backend"", ""uia""]",,"{""vars.vs_hwnd"": ""$.cols[1]""}",,,,,,,
+1,,Maximize the Visual Studio main window.,scripts/window/maximize_window.py,"[""{vars.vs_hwnd}""]",,,,,,,,,
+1,,Find 'Create a new project' button on the Start Window.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Create a new project"", ""--control-type"", ""Button""]",,"{""vars.create_proj_x"": ""$.rows[1].cols[7]"", ""vars.create_proj_y"": ""$.rows[1].cols[8]""}",,,,,,,
+1,,Click 'Create a new project'.,scripts/input/click.py,"[""{vars.create_proj_x}"", ""{vars.create_proj_y}""]",3000,,,,,,,,
+1,,Find the search box in the new project dialog.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Search"", ""--control-type"", ""ComboBox"", ""--match"", ""contains""]",,"{""vars.search_box_x"": ""$.rows[1].cols[7]"", ""vars.search_box_y"": ""$.rows[1].cols[8]""}",,,,,,,
+1,,Click the search box.,scripts/input/click.py,"[""{vars.search_box_x}"", ""{vars.search_box_y}""]",300,,,,,,,,
+1,,Type 'console app' in the search box.,scripts/input/type_text.py,"[""console app"", ""--interval"", ""0.06""]",300,,,,,,,,
+1,,Press Enter to submit the search.,scripts/input/key.py,"[""enter""]",3000,,,,,,,,
+1,,Find the Console App C# template in results.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Console App"", ""--control-type"", ""ListItem"", ""--match"", ""contains""]",,"{""vars.template_x"": ""$.rows[1].cols[7]"", ""vars.template_y"": ""$.rows[1].cols[8]""}",,,,,,,
+1,,Click the Console App template.,scripts/input/click.py,"[""{vars.template_x}"", ""{vars.template_y}""]",1000,,,,,,,,
+1,,Find the Next button (template page).,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Next"", ""--control-type"", ""Button""]",,"{""vars.next1_x"": ""$.rows[1].cols[7]"", ""vars.next1_y"": ""$.rows[1].cols[8]""}",,,,,,,
+1,,Click Next to go to project configuration.,scripts/input/click.py,"[""{vars.next1_x}"", ""{vars.next1_y}""]",3000,,,,,,,,
+1,,Find the Next button (configuration page).,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Next"", ""--control-type"", ""Button""]",,"{""vars.next2_x"": ""$.rows[1].cols[7]"", ""vars.next2_y"": ""$.rows[1].cols[8]""}",,,,,,,
+1,,Click Next to go to Additional Information.,scripts/input/click.py,"[""{vars.next2_x}"", ""{vars.next2_y}""]",3000,,,,,,,,
+1,,Find the Create button.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Create"", ""--control-type"", ""Button""]",,"{""vars.create_x"": ""$.rows[1].cols[7]"", ""vars.create_y"": ""$.rows[1].cols[8]""}",,,,,,,
+1,,Click Create to generate the project.,scripts/input/click.py,"[""{vars.create_x}"", ""{vars.create_y}""]",30000,,,,,,,,Project is created and loads in the editor.
+1,,Re-locate the VS window after project creation.,scripts/window/find_window.py,"[""Microsoft Visual Studio"", ""--backend"", ""uia""]",,"{""vars.vs_hwnd"": ""$.cols[1]""}",,,,,,,
+1,,Maximize the VS window after creation.,scripts/window/maximize_window.py,"[""{vars.vs_hwnd}""]",,,,,,,,,
+1,,Screenshot after project creation.,scripts/files/screenshot.py,,,,,,,,"[""{ss}_created.png""]",,Screenshot saved.
+2,Open NuGet Package Manager,Find the View menu.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""View"", ""--control-type"", ""MenuItem""]",,"{""vars.view_menu_x"": ""$.rows[1].cols[7]"", ""vars.view_menu_y"": ""$.rows[1].cols[8]""}",,,,,,,
+2,,Click the View menu.,scripts/input/click.py,"[""{vars.view_menu_x}"", ""{vars.view_menu_y}""]",800,,,,,,,,
+2,,Find Solution Explorer menu item.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Solution Explorer"", ""--control-type"", ""MenuItem"", ""--match"", ""contains""]",,"{""vars.sol_exp_x"": ""$.rows[1].cols[7]"", ""vars.sol_exp_y"": ""$.rows[1].cols[8]""}",,,,,,,
+2,,Click Solution Explorer to ensure it is open.,scripts/input/click.py,"[""{vars.sol_exp_x}"", ""{vars.sol_exp_y}""]",1000,,,,,,,,
+2,,Find the solution node in Solution Explorer.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""ConsoleApp"", ""--control-type"", ""TreeItem"", ""--match"", ""contains""]",,"{""vars.solution_node_x"": ""$.rows[1].cols[7]"", ""vars.solution_node_y"": ""$.rows[1].cols[8]""}",,,,,,,
+2,,Double-click the solution node to expand it.,scripts/input/click.py,"[""{vars.solution_node_x}"", ""{vars.solution_node_y}"", ""--double""]",300,,,,,,,,
+2,,Find the project node (2nd ConsoleApp TreeItem).,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""ConsoleApp"", ""--control-type"", ""TreeItem"", ""--match"", ""contains"", ""--nth"", ""2""]",,"{""vars.project_node_x"": ""$.rows[1].cols[7]"", ""vars.project_node_y"": ""$.rows[1].cols[8]""}",,,,,,,
+2,,Right-click the project node to open context menu.,scripts/input/click.py,"[""{vars.project_node_x}"", ""{vars.project_node_y}"", ""--right""]",1000,,,,,,,,Context menu opens.
+2,,Find the Manage NuGet Packages menu item.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Manage NuGet Packages"", ""--control-type"", ""MenuItem"", ""--match"", ""contains""]",,"{""vars.nuget_menu_x"": ""$.rows[1].cols[7]"", ""vars.nuget_menu_y"": ""$.rows[1].cols[8]""}",,,,,,,
+2,,Click Manage NuGet Packages.,scripts/input/click.py,"[""{vars.nuget_menu_x}"", ""{vars.nuget_menu_y}""]",5000,,,,,,,,NuGet Package Manager opens.
+2,,Screenshot after opening NuGet Package Manager.,scripts/files/screenshot.py,,,,,,,,"[""{ss}_nuget_opened.png""]",,Screenshot saved.
+3,Search and install package,Find the Browse tab in NuGet Package Manager.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Browse"", ""--control-type"", ""TabItem"", ""--match"", ""contains""]",,"{""vars.browse_tab_x"": ""$.rows[1].cols[7]"", ""vars.browse_tab_y"": ""$.rows[1].cols[8]""}",,,,,,,
+3,,Click the Browse tab.,scripts/input/click.py,"[""{vars.browse_tab_x}"", ""{vars.browse_tab_y}""]",1000,,,,,,,,
+3,,Find the search box in NuGet Package Manager.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Search"", ""--control-type"", ""Edit"", ""--match"", ""contains""]",,"{""vars.nuget_search_x"": ""$.rows[1].cols[7]"", ""vars.nuget_search_y"": ""$.rows[1].cols[8]""}",,,,,,,
+3,,Click the NuGet search box.,scripts/input/click.py,"[""{vars.nuget_search_x}"", ""{vars.nuget_search_y}""]",300,,,,,,,,
+3,,Clear any existing text and type package name.,scripts/input/key.py,"[""ctrl+a""]",100,,,,,,,,
+3,,Type Newtonsoft.Json in the search box.,scripts/input/type_text.py,"[""Newtonsoft.Json"", ""--interval"", ""0.06""]",3000,,,,,,,,
+3,,Find the Newtonsoft.Json package in results.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Newtonsoft.Json"", ""--control-type"", ""ListItem"", ""--match"", ""contains""]",,"{""vars.pkg_x"": ""$.rows[1].cols[7]"", ""vars.pkg_y"": ""$.rows[1].cols[8]""}",,,,,,,
+3,,Click the Newtonsoft.Json package.,scripts/input/click.py,"[""{vars.pkg_x}"", ""{vars.pkg_y}""]",2000,,,,,,,,
+3,,Find the Install button.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Install"", ""--control-type"", ""Button""]",,"{""vars.install_x"": ""$.rows[1].cols[7]"", ""vars.install_y"": ""$.rows[1].cols[8]""}",,,,,,,
+3,,Click Install.,scripts/input/click.py,"[""{vars.install_x}"", ""{vars.install_y}""]",5000,,,,,,,,
+3,,Accept license dialog if present (press Enter).,scripts/input/key.py,"[""enter""]",5000,,,,,,,,Package installs.
+3,,Screenshot after package install.,scripts/files/screenshot.py,,,,,,,,"[""{ss}_installed.png""]",,Screenshot saved.
+4,Build solution,Find the Build menu.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Build"", ""--control-type"", ""MenuItem""]",,"{""vars.build_menu_x"": ""$.rows[1].cols[7]"", ""vars.build_menu_y"": ""$.rows[1].cols[8]""}",,,,,,,
+4,,Click the Build menu.,scripts/input/click.py,"[""{vars.build_menu_x}"", ""{vars.build_menu_y}""]",800,,,,,,,,
+4,,Find Build Solution menu item.,scripts/uia/find_control.py,"[""{vars.vs_hwnd}"", ""--name"", ""Build Solution"", ""--control-type"", ""MenuItem"", ""--match"", ""contains""]",,"{""vars.build_sol_x"": ""$.rows[1].cols[7]"", ""vars.build_sol_y"": ""$.rows[1].cols[8]""}",,,,,,,
+4,,Click Build Solution.,scripts/input/click.py,"[""{vars.build_sol_x}"", ""{vars.build_sol_y}""]",20000,,,,,,,,
+4,,Validate build succeeded in the Output window.,scripts/uia/read_console.py,"[""{vars.vs_hwnd}""]",,,,Build succeeded,30000,1000,,,Output window shows 'Build succeeded'.
+4,,Screenshot after build.,scripts/files/screenshot.py,,,,,,,,"[""{ss}_build.png""]",,Screenshot saved.
+5,Close Visual Studio,Close the Visual Studio window.,scripts/window/close_window.py,"[""{vars.vs_hwnd}"", ""--force""]",1500,,,,,,,,VS closed.
 
 
