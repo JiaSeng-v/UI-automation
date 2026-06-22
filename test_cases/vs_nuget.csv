@@ -1,0 +1,21 @@
+Visual C# -> Windows Classic Desktop .NET Framework -> Windows Form App
+
+Visual Basic -> .NET Standard -> Class Library
+
+
+
+Open your project in Visual Studio.
+"In Solution Explorer, right-click on the project name (e.g., WindowsFormsApp1)."
+Link A to B
+"Select ""Manage NuGet Packages..."" from the context menu."
+In the NuGet Package Manager:  
+Go to the Browse tab.
+"Search for the package name (e.g., EasyPost.NetStandard)."
+"Select the desired package to view details, install, or update."
+build
+
+
+
+
+
+
