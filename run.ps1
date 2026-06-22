@@ -5,6 +5,7 @@
 # Examples:
 #   .\run.ps1 test_cases\powershell_echo_loop.yaml
 #   .\run.ps1 test_cases\powershell_echo_loop.yaml -q
+#   .\run.ps1 test_cases\powershell_echo_loop.csv -q   # CSV spec (run directly)
 param(
     [Parameter(Mandatory = $true, Position = 0)]
     [string]$Spec,
@@ -13,5 +14,6 @@ param(
 )
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
+
 uv run python run_test.py $Spec @Rest
 exit $LASTEXITCODE

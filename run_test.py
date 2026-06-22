@@ -1,7 +1,8 @@
-"""Execute a declarative UI-automation test spec (YAML).
+"""Execute a declarative UI-automation test spec (YAML or CSV).
 
 Usage:
     python run_test.py <spec.yaml>
+    python run_test.py <spec.csv>   # standard-format CSV, loaded in memory
 
 Exit codes:
     0  all steps passed
@@ -10,6 +11,18 @@ Exit codes:
 """
 import argparse, datetime, os, re, subprocess, sys, time
 import yaml
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "scripts", "csvfmt"))
+import csv_loader  # noqa: E402
+
+
+def load_spec(path):
+    """Load a spec from a `.csv` (standard format) or `.yaml`/`.yml` file."""
+    if path.lower().endswith(".csv"):
+        return csv_loader.load(path)
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -143,11 +156,21 @@ def capture(out_text, mapping, ctx):
             raise ValueError(f"capture dst must start with vars.: {dst}")
 
 
-def get_wait(ctx, name):
-    if not name:
+def get_wait(ctx, val):
+    """Return a sleep duration in seconds.
+
+    `val` may be a literal number of milliseconds (int or numeric string) or
+    the name of a key in the spec's `timing` block (legacy form).
+    """
+    if val is None or val == "":
         return 0
-    val = ctx.spec.get("timing", {}).get(name, 0)
-    return int(val) / 1000.0
+    if isinstance(val, (int, float)):
+        return float(val) / 1000.0
+    s = str(val).strip()
+    if s.lstrip("-").isdigit():
+        return int(s) / 1000.0
+    keyed = ctx.spec.get("timing", {}).get(s, 0)
+    return int(keyed) / 1000.0
 
 
 def exec_step(step, ctx, local_subs):
@@ -228,8 +251,7 @@ def main():
                     help="suppress per-step headers and successful stdout echo")
     a = ap.parse_args()
     QUIET = a.quiet
-    with open(a.spec, "r", encoding="utf-8") as f:
-        spec = yaml.safe_load(f)
+    spec = load_spec(a.spec)
     ctx = Ctx(spec)
     print(f"=== {spec.get('name')} ===")
     print(f"screenshot_dir: {ctx.shot_dir}")

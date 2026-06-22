@@ -21,6 +21,16 @@ cd $HOME\UI-automation
 
 (equivalent to `uv run python run_test.py test_cases\powershell_echo_loop.yaml`.)
 
+You can also author and run a test case as a readable CSV file — `run.ps1` loads the `.csv`
+directly (no intermediate YAML):
+
+```powershell
+.\run.ps1 test_cases\powershell_echo_loop.csv -q
+```
+
+See [CSV test-case format](docs/csv-test-format.md) for the file layout, the in-memory loader, and
+the `csv-test-formatter` skill.
+
 The example opens PowerShell via Start menu, echoes 4 fixed strings, validates each via UIA, saves a screenshot per iteration, then closes the window with a mouse-click on the UIA-located Close button.
 
 Exit codes: `0` pass, `1` assertion failed, `2` runner error.
@@ -78,6 +88,7 @@ Driving the runner through Copilot CLI is convenient but costs LLM tokens per tu
 
 - [File structure](docs/file-structure.md) — what each file and folder in the repo is for.
 - [Test-spec format](docs/test-spec-format.md) — YAML keys, step types, placeholders, capture syntax.
+- [CSV test-case format](docs/csv-test-format.md) — author/run test cases as `.csv`; the runner loads CSV directly, and the `csv-test-formatter` skill tidies rough CSV into the standard layout.
 - [Authoring scenarios](docs/authoring-scenarios.md) — interactive REPL workflow + selector conventions.
 - [Creating test cases with Copilot CLI](docs/copilot-cli-test-authoring.md) — user guide + Copilot prompt template.
 - [`AGENTS.md`](AGENTS.md) — auto-loaded instructions for AI coding agents working in this repo.

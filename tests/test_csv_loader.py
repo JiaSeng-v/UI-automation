@@ -1,0 +1,79 @@
+"""Tests for the standard-format CSV loader (readable phase format)."""
+import os
+import sys
+import unittest
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(REPO_ROOT, "scripts", "csvfmt"))
+
+import csv_loader  # noqa: E402
+
+CSV = os.path.join(REPO_ROOT, "test_cases", "powershell_echo_loop.csv")
+
+
+class CsvLoaderTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.spec = csv_loader.load(CSV)
+
+    def test_minimal_top_level_keys(self):
+        # The simplified CSV only carries name/description/artifacts in config.
+        for key in ("name", "description", "artifacts", "steps"):
+            self.assertIn(key, self.spec)
+        self.assertIn("screenshot_dir", self.spec["artifacts"])
+        # config-heavy blocks are intentionally gone
+        for key in ("inputs", "timing", "expected_results"):
+            self.assertNotIn(key, self.spec)
+
+    def test_steps_have_inferred_type_and_auto_id(self):
+        steps = self.spec["steps"]
+        self.assertTrue(steps)
+        for step in steps:
+            self.assertIn("id", step)
+            self.assertIn("type", step)
+            # readable-only / source columns must not leak into the YAML
+            for leaked in ("No", "Main step", "Trigger", "Expected",
+                           "args_mode", "wait_ms"):
+                self.assertNotIn(leaked, step)
+        # unrolled: no foreach steps
+        self.assertFalse(any(s["type"] == "foreach" for s in steps))
+
+    def test_types_are_inferred_correctly(self):
+        steps = self.spec["steps"]
+        # non-special types come from the script basename
+        self.assertEqual(steps[0]["type"], "key")
+        self.assertEqual(steps[3]["type"], "find_window")
+        asserts = [s for s in steps if s["type"] == "assert_console_contains"]
+        self.assertEqual(len(asserts), 4)
+        for s in asserts:
+            self.assertIn("script", s)
+            self.assertIn("expected_contains_expr", s)
+
+    def test_four_screenshot_steps(self):
+        shots = [s for s in self.spec["steps"] if s["type"] == "screenshot"]
+        self.assertEqual(len(shots), 4)
+        for s in shots:
+            self.assertIn("args_expr_on_pass", s)
+            # screenshot dir prepended to the filename pattern
+            self.assertTrue(s["args_expr_on_pass"][0]
+                            .startswith("{artifacts.screenshot_dir}/"))
+
+    def test_wait_after_is_inline_int(self):
+        waits = [s["wait_after"] for s in self.spec["steps"]
+                 if "wait_after" in s]
+        self.assertTrue(waits)
+        self.assertTrue(all(isinstance(w, int) for w in waits))
+
+    def test_poll_values_are_inline_ints(self):
+        for s in self.spec["steps"]:
+            if s["type"] == "assert_console_contains":
+                self.assertIsInstance(s["poll_total_ms"], int)
+                self.assertIsInstance(s["poll_interval_ms"], int)
+
+    def test_step_ids_are_unique(self):
+        ids = [s["id"] for s in self.spec["steps"]]
+        self.assertEqual(len(ids), len(set(ids)))
+
+
+if __name__ == "__main__":
+    unittest.main()

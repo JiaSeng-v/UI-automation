@@ -1,0 +1,18 @@
+# CONFIG
+Section,Key,Value
+name,,REPLACE_WITH_TEST_NAME
+description,,"REPLACE_WITH_ONE_LINE_DESCRIPTION of what the scenario does."
+artifacts,screenshot_dir,screenshots/{timestamp}
+
+# STEPS
+No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,Expected
+1,Launch app,Open Start menu via Win key.,scripts/input/key.py,"[""win""]",700,,,,,,,,
+1,,Type the app name into the Start menu.,scripts/input/type_text.py,"[""notepad""]",1200,,,,,,,,
+1,,Press Enter to launch the top result.,scripts/input/key.py,"[""enter""]",2000,,,,,,,,App window opens.
+1,,Locate the window; stash its hwnd in vars.hwnd.,scripts/window/find_window.py,"[""^Untitled - Notepad$""]",,"{""vars.hwnd"": ""$.cols[1]""}",,,,,,,
+2,Do work,Type some text into the app.,scripts/input/type_text.py,"[""hello world""]",150,,,,,,,,
+2,,Validate the text appears in the console/control.,scripts/uia/read_console.py,"[""{vars.hwnd}""]",,,,hello world,3000,200,,,Text is present.
+2,,Take a screenshot for this phase.,scripts/files/screenshot.py,,,,,,,,"[""{ss}.png""]","[""{ss}_FAIL.png""]",Screenshot ss1 saved.
+3,Close app,Locate the Close button via UIA.,scripts/uia/find_control.py,"[""{vars.hwnd}"", ""--name"", ""Close"", ""--control-type"", ""Button""]",,"{""vars.close_x"": ""$.rows[1].cols[7]"", ""vars.close_y"": ""$.rows[1].cols[8]""}",,,,,,,
+3,,Click the Close button center.,scripts/input/click.py,"[""{vars.close_x}"", ""{vars.close_y}""]",1000,,,,,,,,
+3,,Re-search for the window; it must NOT be found.,scripts/window/find_window.py,"[""^Untitled - Notepad$""]",,,1,,,,,,Window is gone (find returns exit 1).
