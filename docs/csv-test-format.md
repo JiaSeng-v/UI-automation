@@ -1,22 +1,22 @@
 # CSV test-case format
 
-Test cases can be authored as a plain-text **CSV** instead of YAML. CSV is the version-control-friendly, **hand-authored source of truth**: `run.ps1` loads a `.csv` spec directly into the runner (in memory) and runs it — there is no intermediate YAML file.
+Test cases are plain-text **CSV** — the version-control-friendly, **hand-authored source of truth**. `run.ps1` loads a `.csv` spec directly into the runner (in memory) and runs it.
 
 ```powershell
 # Run a CSV test case directly
 .\run.ps1 test_cases\powershell_echo_loop.csv -q
 ```
 
-The CSV is laid out for **readability**: steps are grouped into numbered phases with plain-English descriptions on the left, the values needed to run in the middle, and an `Expected` note on the right. Loops are **unrolled** — each iteration is its own set of rows; there is no `foreach`.
+The layout favors **readability**: steps are grouped into numbered phases — plain-English descriptions on the left, run values in the middle, an `Expected` note on the right. Loops are **unrolled** (one row set per iteration); there is no `foreach`.
 
 Two ways to get a standard-format CSV:
 
 - Copy `test_cases/_template.csv` and fill it in by hand.
-- Hand a rough/freeform CSV to the **`csv-test-formatter` skill** (under `.github/skills/`), which reformats it into the standard layout for you.
+- Hand a rough/freeform CSV to the **`csv-test-formatter` skill** (under `.github/skills/`), which reformats it for you.
 
 ## File layout
 
-One `.csv` per test, with two marker-delimited sections. The marker is a row whose first cell is `# CONFIG` or `# STEPS` (case-insensitive); each section has its own header row. Sections may have different column counts (CSV ragged rows are fine).
+One `.csv` per test, with two marker-delimited sections. A marker is a row whose first cell is `# CONFIG` or `# STEPS` (case-insensitive); each section has its own header row and may have a different column count (ragged rows are fine).
 
 ```
 # CONFIG
@@ -31,9 +31,9 @@ No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,p
 1,,Type 'powershell' into the Start menu.,scripts/input/type_text.py,"[""powershell""]",1200,,,,,,,,
 ```
 
-### `# CONFIG` section (minimal)
+### `# CONFIG` section
 
-Three columns: `Section | Key | Value`. Only what the runner actually needs:
+Three columns: `Section | Key | Value`. Only what the runner needs:
 
 | Section | Notes |
 |---|---|
@@ -41,7 +41,7 @@ Three columns: `Section | Key | Value`. Only what the runner actually needs:
 | `description` | one row |
 | `artifacts` | `screenshot_dir` (uses `{timestamp}`); the runner creates this folder up front |
 
-There is **no** `inputs`, `timing`, or `expected_results` block — those values now live on the step rows (see below). The parsed spec simply omits those optional top-level keys; the runner tolerates their absence.
+No `inputs`, `timing`, or `expected_results` block — those values live on the step rows; the runner tolerates their absence.
 
 ### `# STEPS` section
 
@@ -51,14 +51,14 @@ Readable columns (authoring-facing, **ignored on import**):
 
 | Column | Meaning |
 |---|---|
-| **No** | Phase number. Repeated or left blank to continue within a phase. |
+| **No** | Phase number. Repeated or blank to continue within a phase. |
 | **Main step** | Phase name, on the first row of each phase only. |
 | **Trigger** | Human-readable action — becomes the step's `description`. |
-| **Expected** | Expected-result note for that step. Documentation only. |
+| **Expected** | Expected-result note. Documentation only. |
 
 Runnable columns:
 
-| Column | Maps to YAML | Notes |
+| Column | Spec key | Notes |
 |---|---|---|
 | `script` | `script` | required for every real step |
 | `args` | `args` (JSON list) | always rendered — `{vars...}`, `{timestamp}`, `{a + b}` arithmetic all work |
@@ -68,19 +68,19 @@ Runnable columns:
 | `expected_contains` | `expected_contains_expr` | presence makes the step an `assert_console_contains` |
 | `poll_total_ms` / `poll_interval_ms` | same keys | **literal milliseconds** for the assert's polling |
 | `screenshot_pass` / `screenshot_fail` | `args_expr_on_pass` / `args_expr_on_fail` | JSON list of filename patterns; the loader prepends `{artifacts.screenshot_dir}/` |
-| `max_iter` | `max_iterations` | **`# LOOP` rows only** — safety cap on a conditional `while` loop (see below) |
+| `max_iter` | `max_iterations` | **`# LOOP` rows only** — safety cap on a `while` loop (see below) |
 
 **No `id`, `type`, or `args_mode` columns** — the loader derives them:
 
-- **`id`** is auto-generated (`step_1`, `step_2`, …); the runner only uses it for log/failure messages.
-- **`type`** is inferred: `screenshot_pass` set → `screenshot`; `expected_contains` set → `assert_console_contains`; otherwise the **script basename** (e.g. `key`, `click`, `type_text`, `find_window`, `find_control`).
-- **`args` is always rendered**, so there is no `plain`/`expr` distinction — the runner applies `{placeholder}` substitution to every args string.
+- **`id`**: auto-generated (`step_1`, `step_2`, …); used only in log/failure messages.
+- **`type`**: inferred — `screenshot_pass` set → `screenshot`; `expected_contains` set → `assert_console_contains`; otherwise the **script basename** (e.g. `key`, `click`, `find_control`).
+- **`args`**: always rendered (`{placeholder}` substitution applied to every args string), so there is no `plain`/`expr` distinction.
 
-Screenshots stay their own explicit step rows; use the `{ss}` ordering placeholder in the `screenshot_pass` / `screenshot_fail` filename (e.g. `{ss}.png`) — see [test-spec-format.md](test-spec-format.md). With loops unrolled, the `{ss}` counter runs globally `ss_1..ss_N`.
+Screenshots are their own step rows; use the `{ss}` ordering placeholder in the filename (e.g. `{ss}.png`) — see [test-spec-format.md](test-spec-format.md). With loops unrolled, `{ss}` counts globally `ss_1..ss_N`.
 
 ## Conditional loops (`# LOOP` / `# END LOOP`)
 
-Most repetition should be **unrolled** (write the rows out). When the number of repetitions is **not known ahead of time** — e.g. "keep remediating vulnerable packages until none remain" — use a `# LOOP` block instead. It maps to a runner `while` step.
+Prefer unrolling. When the repetition count is **not known ahead of time** — e.g. "keep remediating vulnerable packages until none remain" — use a `# LOOP` block; it maps to a runner `while` step.
 
 ```
 # STEPS
@@ -93,23 +93,23 @@ No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,p
 
 Rules:
 
-- A row whose **first cell (`No` column)** is `# LOOP` opens the block; the matching `# END LOOP` row closes it. The rows in between are the loop **body** (ordinary step rows).
-- The `# LOOP` row itself is the loop **condition**: its `script` + `args` are run before every pass. The loop **continues while the condition's exit code equals `expect_exit`** (default `0`) and **stops** otherwise. With `find_control` (exit `0` = found, `1` = not found), the loop runs while a matching control still exists.
-- The `# LOOP` row may carry a `capture` mapping — applied to the condition's stdout each pass — so the probe can capture the current target's coordinates for the body to act on.
-- `max_iter` (on the `# LOOP` row) caps the iteration count as a safety net against an infinite loop. If omitted, a built-in default applies (`run_test.WHILE_MAX_ITERATIONS`).
-- `{ss}` is continuous across the whole run; it does **not** reset at the start of each iteration, so loop screenshots keep counting up (`ss_7`, `ss_8`, ...).
+- The `# LOOP` row opens the block; the matching `# END LOOP` closes it. Rows in between are the loop **body**.
+- The `# LOOP` row is the **condition**: its `script` + `args` run before every pass. The loop **continues while the condition's exit code equals `expect_exit`** (default `0`) and stops otherwise. With `find_control` (exit `0` = found, `1` = not found), it runs while a matching control still exists.
+- The `# LOOP` row may carry a `capture` mapping (applied to the condition's stdout each pass) so the body can act on the current target's coordinates.
+- `max_iter` (on the `# LOOP` row) caps iterations against an infinite loop. If omitted, `run_test.WHILE_MAX_ITERATIONS` applies.
+- `{ss}` does **not** reset per iteration — loop screenshots keep counting up (`ss_7`, `ss_8`, ...).
 
 ## Loader and skill
 
 | Component | Purpose |
 |---|---|
-| `scripts\csvfmt\csv_loader.py` | Parses a standard-format CSV into the spec dict the runner executes. `run_test.py` calls `load()` for any `.csv` spec, so CSV runs directly. Run `uv run python scripts\csvfmt\csv_loader.py <file.csv>` to print the parsed spec as JSON for debugging. |
-| `scripts\csvfmt\csv_schema.py` | Defines the shared section markers and column layout. |
-| `.github\skills\csv-test-formatter\SKILL.md` | Copilot CLI skill that reformats a rough/freeform CSV into this standard layout. |
-| `test_cases\_template.csv` | Standard-format skeleton to copy when authoring by hand. |
+| `scripts\csvfmt\csv_loader.py` | Parses a CSV into the runner's spec dict. Run `uv run python scripts\csvfmt\csv_loader.py <file.csv>` to print the parsed spec as JSON for debugging. |
+| `scripts\csvfmt\csv_schema.py` | Shared section markers and column layout. |
+| `.github\skills\csv-test-formatter\SKILL.md` | Skill that reformats a rough CSV into this layout. |
+| `test_cases\_template.csv` | Skeleton to copy when authoring by hand. |
 
 ## Caveats
 
-- `No`, `Main step`, and `Expected` are CSV-only annotations — they never appear in the parsed spec.
-- Complex cell values (`args`, `capture`, screenshot patterns) are stored as JSON so they stay lossless and inspectable; the `csv` module quotes/escapes them safely.
-- `wait_ms` / `poll_*_ms` are raw integer milliseconds. (The runner also still accepts a `timing`-key name there for hand-written YAML, but the CSV format uses literal numbers.)
+- `No`, `Main step`, and `Expected` are CSV-only annotations — they never reach the parsed spec.
+- Complex cell values (`args`, `capture`, screenshot patterns) are stored as JSON so they stay lossless; the `csv` module quotes/escapes them safely.
+- `wait_ms` / `poll_*_ms` are raw integer milliseconds.
