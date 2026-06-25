@@ -13,8 +13,7 @@ This file follows the [agents.md](https://agents.md/) convention and is loaded a
 - `README.md` — install, run, top-level usage.
 - `docs/test-spec-format.md` — YAML keys, step types, placeholders, capture syntax.
 - `docs/csv-test-format.md` — authoring/running test cases as `.csv`; the runner loads CSV directly via the in-memory loader in `scripts/csvfmt/`, and the `csv-test-formatter` skill (`.github/skills/`) reformats rough CSV into the standard layout.
-- `docs/authoring-scenarios.md` — interactive REPL workflow + selector conventions.
-- `docs/copilot-cli-test-authoring.md` — user guide for authoring test cases via an AI agent.
+- `docs/authoring-scenarios.md` — how to author a test case by describing plain steps to an AI agent (Copilot CLI, etc.).
 - `docs/file-structure.md` — what every file/folder is for.
 - `docs/reproducibility.md` — why runs must be bit-identical.
 - `docs/troubleshooting.md` — DPI, multi-monitor, UI language gotchas.

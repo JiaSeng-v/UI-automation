@@ -39,13 +39,19 @@ Add `-q` (or `--quiet`) to suppress per-step echo and successful subcommand stdo
 
 ## Author a new scenario
 
-Use the interactive REPL — each step is executed live against the real UI and captured into the YAML as you go:
+Describe your scenario as plain numbered steps and let an AI agent convert it into a runnable CSV test case — you don't need to know which script implements each action or its arguments:
 
-```powershell
-uv run python scripts/authoring/author_test.py test_cases\my_scenario.yaml
+```text
+1. Open Notepad from the Start menu.
+2. Type "hello from copilot".
+3. Save as %TEMP%\out.txt with Ctrl+S.
+4. Assert the file exists.
+5. Close Notepad.
 ```
 
-The REPL halts on ambiguous selectors and on a UI that stops responding (3 consecutive identical fingerprints). See [`docs/authoring-scenarios.md`](docs/authoring-scenarios.md) for the full workflow and the recommended `auto_id + name` selector pattern.
+> Convert these steps into `test_cases/notepad_save.csv` and validate it by running `.\run.ps1 test_cases\notepad_save.csv -q`.
+
+See [`docs/authoring-scenarios.md`](docs/authoring-scenarios.md) for the full workflow and more example prompts.
 
 ## Run the tests
 
@@ -57,7 +63,7 @@ uv run python -m unittest discover -s tests -v
 
 ## Using with Copilot CLI
 
-If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any other agent that reads `AGENTS.md`) installed, you can drive the toolkit conversationally. The repo's [`AGENTS.md`](AGENTS.md) is auto-loaded and contains the rules the agent must follow when authoring or editing test cases. For the human-facing workflow and example prompts, see [`docs/copilot-cli-test-authoring.md`](docs/copilot-cli-test-authoring.md).
+If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any other agent that reads `AGENTS.md`) installed, you can drive the toolkit conversationally. The repo's [`AGENTS.md`](AGENTS.md) is auto-loaded and contains the rules the agent must follow when authoring or editing test cases. For the human-facing workflow and example prompts, see [`docs/authoring-scenarios.md`](docs/authoring-scenarios.md).
 
 ### Install the Copilot CLI
 
@@ -89,8 +95,7 @@ Driving the runner through Copilot CLI is convenient but costs LLM tokens per tu
 - [File structure](docs/file-structure.md) — what each file and folder in the repo is for.
 - [Test-spec format](docs/test-spec-format.md) — YAML keys, step types, placeholders, capture syntax.
 - [CSV test-case format](docs/csv-test-format.md) — author/run test cases as `.csv`; the runner loads CSV directly, and the `csv-test-formatter` skill tidies rough CSV into the standard layout.
-- [Authoring scenarios](docs/authoring-scenarios.md) — interactive REPL workflow + selector conventions.
-- [Creating test cases with Copilot CLI](docs/copilot-cli-test-authoring.md) — user guide + Copilot prompt template.
+- [Authoring scenarios with AI](docs/authoring-scenarios.md) — describe plain steps to an agent and get a runnable CSV.
 - [`AGENTS.md`](AGENTS.md) — auto-loaded instructions for AI coding agents working in this repo.
 - [Reproducibility](docs/reproducibility.md) — how runs stay bit-identical.
 - [Troubleshooting](docs/troubleshooting.md) — DPI, multi-monitor, UI language, legacy pip path.

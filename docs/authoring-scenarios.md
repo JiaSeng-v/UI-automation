@@ -1,51 +1,75 @@
-# Authoring a new scenario
+# Authoring a new scenario with AI
 
-Test cases are authored as plain-text **CSV**. CSV is the version-control-friendly, hand-authored source of truth: `run.ps1` loads a `.csv` spec directly into the runner (in memory) and runs it — there is no intermediate YAML file. See [csv-test-format.md](csv-test-format.md) for the full column reference.
+The simplest way to build a test case is to **describe it as plain numbered steps and let an AI agent turn it into a runnable CSV**. You don't need to know which script implements each action or what arguments it takes — the agent works that out for you.
 
-## Two ways to get a CSV
+This works with [GitHub Copilot CLI](https://github.com/github/gh-copilot) or any other agent that auto-loads [`AGENTS.md`](../AGENTS.md) (Codex CLI, Cursor, Aider, Claude Code, …). The authoring **rules** live in `AGENTS.md` and load automatically — you only drive the conversation.
 
-- Copy [`test_cases/_template.csv`](../test_cases/_template.csv) and fill it in by hand. It already has the `# CONFIG` / `# STEPS` markers, the header row, and a few example step rows to adapt.
-- Hand a rough/freeform CSV to the **`csv-test-formatter` skill** (under `.github/skills/`), which reformats it into the standard layout for you.
+## Prerequisites
 
-Keep `name`/`description` and all step values **literal** — no randomness — so reruns are bit-for-bit reproducible.
+- Repo installed per the [README](../README.md) (`uv`, Python, deps).
+- An AI agent installed and authenticated. The quickest path is the bundled installer, which sets up both the standalone `copilot` CLI and the `gh copilot` extension and walks you through login:
+  ```powershell
+  .\install-copilot.ps1
+  ```
+- The target Windows app reachable from the Start menu (or with a known launch path).
 
-## Run the scenario
+## The flow
 
-```powershell
-.\run.ps1 test_cases\my_scenario.csv -q
-```
+1. **Write your scenario as plain numbered steps** — one action per line, in the order a human would perform them. Mention the app to open, what to type/click, what to assert, and when to screenshot.
+2. **Ask the agent to convert and validate** — point it at a filename under `test_cases/` and let it produce the CSV and run it.
+3. **Let it run** — the agent saves the CSV and executes `.\run.ps1 test_cases\<name>.csv -q` (no LLM in the run loop). The rules in `AGENTS.md` keep the output reproducible.
+4. **On failure, paste the failing step id + stderr back** and ask for a targeted fix. Don't let it re-emit the whole file unless the structure itself is wrong.
 
-Iterate on the `wait_ms` / `poll_*_ms` columns if you see flaky waits. [`test_cases/powershell_echo_loop.csv`](../test_cases/powershell_echo_loop.csv) is a complete worked example.
+You never hand-write `script` paths, `args`, or UIA selectors — the agent picks them (it discovers selectors via Inspect.exe / the `auto_id + name` pattern) and fills in the CSV columns. For the CSV layout itself, see [csv-test-format.md](csv-test-format.md).
 
-## Discovering selectors
+## Worked example
 
-Use **Inspect.exe** (ships with the Windows SDK, typically at `C:\Program Files (x86)\Windows Kits\10\bin\<version>\x64\Inspect.exe`) to discover UIA selectors for the controls you'll target:
-
-- window title
-- control `Name` / `AutomationId` / `ControlType`
-- any other property you'll match against
-
-## Selector convention
-
-Prefer the **AutomationId + Name** pattern so the CSV survives small UI changes. Pass both into `find_control.py` via the step's `args`, and always give it a captured parent window hwnd:
+Give the agent steps like this:
 
 ```text
-scripts/uia/find_control.py  ["{vars.hwnd}", "--auto-id", "CloseButton", "--name", "Close", "--name-fallback", "--control-type", "Button"]
+1. Open Notepad from the Start menu.
+2. Type "hello from copilot".
+3. Save the file as %TEMP%\copilot_test.txt with Ctrl+S.
+4. Assert the file exists.
+5. Close Notepad by clicking the Close button.
 ```
 
-When both `--auto-id` and `--name` are present, add `--name-fallback`: `scripts/uia/find_control.py` tries AutomationId first and, if it yields zero matches, retries with the auto_id filter dropped (name / type / class still apply). This makes scenarios resilient to AutomationId churn between app builds.
+Then prompt:
 
-Capture the located control's coordinates with a `capture` mapping on that step (e.g. `{"vars.close_x": "$.rows[1].cols[7]", "vars.close_y": "$.rows[1].cols[8]"}`) and reference them as `{vars.close_x}` in later rows.
+> Convert these steps into a CSV test case at `test_cases/notepad_save.csv` and validate it by running `.\run.ps1 test_cases\notepad_save.csv -q`. Report only the exit code and any FAIL lines.
 
-## Conditional loops
+The agent writes `test_cases/notepad_save.csv`, runs it, and reports the result.
 
-Most repetition should be **unrolled** — write each iteration as its own rows. When the number of repetitions is not known ahead of time (e.g. "keep remediating vulnerable packages until none remain"), use a `# LOOP` / `# END LOOP` block instead; it maps to a runner `while` step. See the "Conditional loops" section of [csv-test-format.md](csv-test-format.md).
+## More example prompts
+
+**Run an existing scenario** (no authoring):
+> Run `.\run.ps1 test_cases\powershell_echo_loop.csv -q` and report only the exit code and any FAIL lines.
+
+**Variant of an existing scenario:**
+> Use `test_cases/powershell_echo_loop.csv` as a template to create `test_cases/cmd_echo.csv` that opens Command Prompt instead of PowerShell and echoes the four strings, then validate it.
+
+**Repeat-until (unknown count):**
+> In `test_cases/<name>.csv`, keep clicking the next "Vulnerable" row until none remain, using a `# LOOP` block. Loops are unrolled otherwise.
+
+**Targeted fix:**
+> Step `step_7` fails with `expected_contains not found within 3000 ms`. The text appears but with a leading `PS>` prompt. Update only that step's `expected_contains` — don't touch other steps.
+
+## How the agent knows the rules
+
+`AGENTS.md` is auto-loaded on session start and tells the agent the CSV layout, the reproducibility constraints (no randomness), and the selector conventions. Everything under `docs/`, `scripts/`, and `test_cases/` is read on demand. For Copilot-only tweaks, add `.github/copilot-instructions.md`.
+
+## Token-efficient usage
+
+See the [*Token-efficient Copilot usage*](../README.md#token-efficient-copilot-usage) section in the README — the biggest saving is invoking `.\run.ps1 <spec>` directly for routine runs (no LLM tokens).
 
 ## See also
 
 - [csv-test-format.md](csv-test-format.md) — full CSV column and section reference.
 - [test-spec-format.md](test-spec-format.md) — step types, placeholders, and capture syntax.
 - [scripts-reference.md](scripts-reference.md) — catalog of every step script under `scripts/`.
+- [`AGENTS.md`](../AGENTS.md) — rules the agent follows (auto-loaded).
+- [troubleshooting.md](troubleshooting.md) — DPI, multi-monitor, UI-language gotchas.
+- [reproducibility.md](reproducibility.md) — why runs must stay bit-identical.
 
 ## Running tests
 

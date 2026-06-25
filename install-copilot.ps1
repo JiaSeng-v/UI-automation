@@ -142,5 +142,5 @@ Write-Host "   copilot --version" -ForegroundColor White
 Write-Host "   gh copilot --help" -ForegroundColor White
 Write-Host ""
 Write-Host " Next: author test cases conversationally." -ForegroundColor Green
-Write-Host " See docs\copilot-cli-test-authoring.md" -ForegroundColor White
+Write-Host " See docs\authoring-scenarios.md" -ForegroundColor White
 Write-Host "============================================================" -ForegroundColor Green

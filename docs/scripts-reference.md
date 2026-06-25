@@ -231,7 +231,7 @@ clipboard.py <read|write|write-stdin> [text]
 ## `authoring/`
 
 ### `author_test.py` — interactive YAML authoring REPL
-Builds a runnable YAML spec one compact step line at a time. Each step is executed live against the real UI, so captured variables (window hwnds, control coordinates) accumulate as you go. Includes two safety halts: ambiguous `find_control` selectors and 3-in-a-row identical UI fingerprints. See [`authoring-scenarios.md`](authoring-scenarios.md) for the workflow.
+Builds a runnable YAML spec one compact step line at a time. Each step is executed live against the real UI, so captured variables (window hwnds, control coordinates) accumulate as you go. Includes two safety halts: ambiguous `find_control` selectors and 3-in-a-row identical UI fingerprints. (Lower-level tool; the recommended authoring path is describing steps to an AI agent — see [`authoring-scenarios.md`](authoring-scenarios.md).)
 
 ```
 author_test.py <out_yaml>

@@ -97,8 +97,7 @@ See [`scripts-reference.md`](scripts-reference.md) for what every script does, i
 | [`file-structure.md`](file-structure.md) | This document — layout of the repo. |
 | [`scripts-reference.md`](scripts-reference.md) | What every `scripts/` helper does — step `type`, arguments, exit codes, grouped by category. |
 | [`test-spec-format.md`](test-spec-format.md) | Reference for YAML spec keys, step types, placeholder syntax, and `capture` rules. |
-| [`authoring-scenarios.md`](authoring-scenarios.md) | Workflow for writing a new scenario, including using Inspect.exe to discover UIA selectors. |
-| [`copilot-cli-test-authoring.md`](copilot-cli-test-authoring.md) | Human-facing workflow for authoring test cases via Copilot CLI / other AI agents. |
+| [`authoring-scenarios.md`](authoring-scenarios.md) | How to author a test case by describing plain steps to an AI agent (Copilot CLI / other agents), which produces a runnable CSV. |
 | [`reproducibility.md`](reproducibility.md) | Why runs stay bit-identical (pinned inputs, UIA targeting, locked deps). |
 | [`troubleshooting.md`](troubleshooting.md) | DPI scaling, multi-monitor, UI-language, and legacy pip path issues. |
 
