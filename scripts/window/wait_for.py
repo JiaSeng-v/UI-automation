@@ -18,6 +18,10 @@ def main():
                    help="which helper to poll: find_window.py or find_control.py")
     p.add_argument("--timeout-ms", dest="timeout_ms", type=int, default=5000)
     p.add_argument("--poll-ms", dest="poll_ms", type=int, default=250)
+    p.add_argument("--absent", action="store_true",
+                   help="invert: poll until the wrapped helper FAILS (control/window no longer "
+                        "found), then exit 0. Useful to wait for a transient element such as a "
+                        "loading placeholder to disappear before probing the settled list.")
     p.add_argument("forward", nargs=argparse.REMAINDER,
                    help="args forwarded to the wrapped helper; place after `--`")
     a = p.parse_args()
@@ -44,11 +48,21 @@ def main():
                            encoding="utf-8", errors="replace")
         last_stderr = r.stderr
         last_stdout = r.stdout
-        if r.returncode == 0 and r.stdout.strip():
+        present = r.returncode == 0 and r.stdout.strip()
+        if a.absent:
+            if not present:
+                # control/window is gone (or never appeared) -> settled
+                return
+        elif present:
             sys.stdout.write(r.stdout)
             sys.stdout.flush()
             return
         if time.time() >= deadline:
+            if a.absent:
+                print(f"timeout: {a.mode} still present after {a.timeout_ms}ms "
+                      f"({attempts} attempt{'s' if attempts != 1 else ''})",
+                      file=sys.stderr)
+                sys.exit(1)
             print(f"timeout: {a.mode} not found after {a.timeout_ms}ms "
                   f"({attempts} attempt{'s' if attempts != 1 else ''}); "
                   f"last stderr: {last_stderr.strip()[:200]!r}",
