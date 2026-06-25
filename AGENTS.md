@@ -28,7 +28,7 @@ This file follows the [agents.md](https://agents.md/) convention and is loaded a
 3. Every step has `id`, `type`, `description`. Reference timing via `wait_after: <key_from_timing_block>` — never inline ms literals.
 4. **Selectors:** prefer `auto_id` + `name` together. `scripts/uia/find_control.py` tries AutomationId first, falls back to name. Always pass `parent=` a captured window hwnd.
 5. **Capture** window/control handles with `capture: { vars.<name>: "$.cols[1]" }` on `find_window` / `find_control` steps; reference them as `{vars.<name>}` in later steps.
-6. Artifact paths use `{timestamp}` (substituted at run start, UTC). Default screenshot dir: `screenshots/{timestamp}`. For ordered screenshot names use the `{ss}` placeholder in `screenshot` step filenames (renders `ss1`, `ss2`, ...; resets per `foreach` iteration, so add `{n}` for uniqueness, e.g. `{ss}_{n}_name.png`).
+6. Artifact paths use `{timestamp}` (substituted at run start, UTC). Default screenshot dir: `screenshots/{timestamp}`. For ordered screenshot names use the `{ss}` placeholder in `screenshot` step filenames (renders `ss_1`, `ss_2`, ...; continuous across the whole run including loops, so it never restarts — optionally add `{n}` for the iteration index, e.g. `{ss}_{n}_name.png`).
 7. For console assertions use `assert_console_contains` with `poll_total_ms` and `poll_interval_ms` from the `timing` block.
 8. For file assertions use `assert_file` (supports `--negate`, `--contains`, `--delete`).
 9. Do **not** invent new step types. If something doesn't fit, ask before extending the schema.

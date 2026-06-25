@@ -67,21 +67,22 @@ See [`test_cases/powershell_echo_loop.yaml`](../test_cases/powershell_echo_loop.
 ## Screenshot ordering counter: `{ss}`
 
 Inside `screenshot` steps you can use the `{ss}` placeholder to prefix filenames with a
-capture-order counter. It renders as `ss1`, `ss2`, `ss3`, ... (no zero-padding):
+capture-order counter. It renders as `ss_1`, `ss_2`, `ss_3`, ... (no zero-padding):
 
 ```yaml
 - id: snapshot
   type: screenshot
   script: scripts/files/screenshot.py
-  args_expr_on_pass: ["{artifacts.screenshot_dir}/{ss}_login.png"]   # -> ss1_login.png, ss2_login.png, ...
+  args_expr_on_pass: ["{artifacts.screenshot_dir}/{ss}_login.png"]   # -> ss_1_login.png, ss_2_login.png, ...
 ```
 
 Behavior:
 
 - The counter increments once per executed `screenshot` step (pass or fail variant).
-- It **resets to `1` at the start of each `foreach` iteration**, so include the iteration
-  index `{n}` to keep filenames unique across iterations, e.g.
-  `{ss}_{n}_login.png` -> `ss1_1_login.png`, `ss1_2_login.png`.
+- It is **continuous across the whole run**, including `foreach` and `while` loop
+  iterations, so numbers never restart (`ss_1`, `ss_2`, ..., `ss_N`). You can still add
+  the iteration index `{n}` for readability, e.g.
+  `{ss}_{n}_login.png` -> `ss_7_1_login.png`, `ss_8_2_login.png`.
 - `{ss}` only resolves inside `screenshot` steps; used anywhere else it renders to an empty
   string.
 
