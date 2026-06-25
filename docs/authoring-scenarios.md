@@ -1,62 +1,56 @@
 # Authoring a new scenario
 
-There are two ways to author a scenario:
+Test cases are authored as plain-text **CSV**. CSV is the version-control-friendly, hand-authored source of truth: `run.ps1` loads a `.csv` spec directly into the runner (in memory) and runs it — there is no intermediate YAML file. See [csv-test-format.md](csv-test-format.md) for the full column reference.
 
-## Option A — Interactive REPL (recommended)
+## Two ways to get a CSV
 
-Run the interactive authoring tool and type one compact step per line. Each step is executed live, so captured variables (window hwnds, control coordinates, ...) accumulate as you go.
+- Copy [`test_cases/_template.csv`](../test_cases/_template.csv) and fill it in by hand. It already has the `# CONFIG` / `# STEPS` markers, the header row, and a few example step rows to adapt.
+- Hand a rough/freeform CSV to the **`csv-test-formatter` skill** (under `.github/skills/`), which reformats it into the standard layout for you.
+
+Keep `name`/`description` and all step values **literal** — no randomness — so reruns are bit-for-bit reproducible.
+
+## Run the scenario
 
 ```powershell
-uv run python scripts/authoring/author_test.py test_cases\my_scenario.yaml
+.\run.ps1 test_cases\my_scenario.csv -q
 ```
 
-Commands inside the REPL: `multi` for block input, `edit` to replace a step, `save` to write the YAML, `quit` to exit.
+Iterate on the `wait_ms` / `poll_*_ms` columns if you see flaky waits. [`test_cases/powershell_echo_loop.csv`](../test_cases/powershell_echo_loop.csv) is a complete worked example.
 
-### Selector convention
+## Discovering selectors
 
-Prefer the **AutomationId + Name** pattern so the YAML survives small UI changes:
+Use **Inspect.exe** (ships with the Windows SDK, typically at `C:\Program Files (x86)\Windows Kits\10\bin\<version>\x64\Inspect.exe`) to discover UIA selectors for the controls you'll target:
+
+- window title
+- control `Name` / `AutomationId` / `ControlType`
+- any other property you'll match against
+
+## Selector convention
+
+Prefer the **AutomationId + Name** pattern so the CSV survives small UI changes. Pass both into `find_control.py` via the step's `args`, and always give it a captured parent window hwnd:
 
 ```text
-click "Close" type=Button auto_id=CloseButton parent=win_hwnd
-find_control parent=win_hwnd name="Close" auto_id=CloseButton type=Button
+scripts/uia/find_control.py  ["{vars.hwnd}", "--auto-id", "CloseButton", "--name", "Close", "--name-fallback", "--control-type", "Button"]
 ```
 
-When both `auto_id=` and a name are present, the authoring tool emits both `--auto-id` and `--name` plus `--name-fallback` into the saved YAML. `scripts/uia/find_control.py` then tries AutomationId first and, if it yields zero matches, retries with the auto_id filter dropped (name / type / class still apply). This makes scenarios resilient to AutomationId churn between app builds.
+When both `--auto-id` and `--name` are present, add `--name-fallback`: `scripts/uia/find_control.py` tries AutomationId first and, if it yields zero matches, retries with the auto_id filter dropped (name / type / class still apply). This makes scenarios resilient to AutomationId churn between app builds.
 
-If you only supply a name the tool prints a TIP suggesting you add an `auto_id=` — it never blocks.
+Capture the located control's coordinates with a `capture` mapping on that step (e.g. `{"vars.close_x": "$.rows[1].cols[7]", "vars.close_y": "$.rows[1].cols[8]"}`) and reference them as `{vars.close_x}` in later rows.
 
-### Live safety checks
+## Conditional loops
 
-The REPL runs each step against the real UI as you type it, and applies two safeguards on top of that:
+Most repetition should be **unrolled** — write each iteration as its own rows. When the number of repetitions is not known ahead of time (e.g. "keep remediating vulnerable packages until none remain"), use a `# LOOP` / `# END LOOP` block instead; it maps to a runner `while` step. See the "Conditional loops" section of [csv-test-format.md](csv-test-format.md).
 
-- **Ambiguous selector halt.** If a `find_control` selector matches more than one control, the step is **not executed**; instead the REPL prints every candidate (name / auto_id / type / rect) and asks you to re-enter the step with a more specific selector (`auto_id=`, `type=`, `class=`, or `nth=`). This is what would have hit the "two Close buttons" problem during authoring instead of at run time.
+## See also
 
-- **Recurring-state halt.** After each acting step (`click` / `key` / `type_text`), the REPL captures a UI fingerprint via `scripts/uia/ui_fingerprint.py`. If the **last three** consecutive fingerprints are identical — i.e. the UI hasn't changed despite your inputs — authoring halts with a prompt:
-  - `[k]eep` — accept the step and keep going
-  - `[d]iscard` — drop the step and try a different one
-  - `[a]bort` — discard the current batch entirely
-
-## Option B — Hand-edit YAML
-
-1. Use **Inspect.exe** (ships with the Windows SDK, typically at `C:\Program Files (x86)\Windows Kits\10\bin\<version>\x64\Inspect.exe`) to discover UIA selectors for the controls you'll target:
-   - window title
-   - button `Name` / `AutomationId` / `ControlType`
-   - any other property you'll match against
-2. Copy [`test_cases/powershell_echo_loop.yaml`](../test_cases/powershell_echo_loop.yaml) as a starting point.
-3. Replace `inputs`, `steps`, and `expected_results`. Keep `inputs` literal — no randomness — so reruns are bit-for-bit reproducible.
-4. Run the spec:
-   ```powershell
-   uv run python run_test.py test_cases\my_scenario.yaml
-   ```
-5. Iterate on the `timing:` constants if you see flaky waits.
-
-See [test-spec-format.md](test-spec-format.md) for the full YAML reference.
+- [csv-test-format.md](csv-test-format.md) — full CSV column and section reference.
+- [test-spec-format.md](test-spec-format.md) — step types, placeholders, and capture syntax.
+- [scripts-reference.md](scripts-reference.md) — catalog of every step script under `scripts/`.
 
 ## Running tests
 
-Unit tests for the authoring tool live in `tests/`:
+Unit tests for the loader and runner live in `tests/`:
 
 ```powershell
 uv run python -m unittest discover -s tests -v
 ```
-
