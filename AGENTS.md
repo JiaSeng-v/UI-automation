@@ -54,3 +54,10 @@ Windows 10/11, PowerShell, Python via `uv` with pins in `requirements.lock.txt` 
 - Make surgical changes. Don't touch unrelated code or randomize anything that affects reproducibility.
 - Don't commit secrets or generated `screenshots/{timestamp}/` artifacts.
 - Don't add new linters, formatters, or test frameworks without being asked.
+
+## Documentation style (Markdown)
+
+- **Do NOT hard-wrap prose.** Write one paragraph per line; let the editor soft-wrap. Do not insert manual line breaks to fit an ~80/100-column limit — they create noisy diffs.
+- Separate paragraphs with a single blank line, not by wrapping a paragraph across multiple lines.
+- **Exceptions (these stay as-is — the "certain scenarios"):** fenced code blocks (```` ``` ````), tables, headings, and list/blockquote markup. Never reflow content inside code fences, and keep each table row and list item on its own line.
+- If a long list item needs a continuation, keep it as part of that item; don't split a sentence into separate hard-wrapped lines.

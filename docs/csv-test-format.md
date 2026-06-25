@@ -1,29 +1,22 @@
 # CSV test-case format
 
-Test cases can be authored as a plain-text **CSV** instead of YAML. CSV is the
-version-control-friendly, **hand-authored source of truth**: `run.ps1` loads a `.csv` spec
-directly into the runner (in memory) and runs it — there is no intermediate YAML file.
+Test cases can be authored as a plain-text **CSV** instead of YAML. CSV is the version-control-friendly, **hand-authored source of truth**: `run.ps1` loads a `.csv` spec directly into the runner (in memory) and runs it — there is no intermediate YAML file.
 
 ```powershell
 # Run a CSV test case directly
 .\run.ps1 test_cases\powershell_echo_loop.csv -q
 ```
 
-The CSV is laid out for **readability**: steps are grouped into numbered phases with plain-English
-descriptions on the left, the values needed to run in the middle, and an `Expected` note on the
-right. Loops are **unrolled** — each iteration is its own set of rows; there is no `foreach`.
+The CSV is laid out for **readability**: steps are grouped into numbered phases with plain-English descriptions on the left, the values needed to run in the middle, and an `Expected` note on the right. Loops are **unrolled** — each iteration is its own set of rows; there is no `foreach`.
 
 Two ways to get a standard-format CSV:
 
 - Copy `test_cases/_template.csv` and fill it in by hand.
-- Hand a rough/freeform CSV to the **`csv-test-formatter` skill** (under `.github/skills/`), which
-  reformats it into the standard layout for you.
+- Hand a rough/freeform CSV to the **`csv-test-formatter` skill** (under `.github/skills/`), which reformats it into the standard layout for you.
 
 ## File layout
 
-One `.csv` per test, with two marker-delimited sections. The marker is a row whose first cell is
-`# CONFIG` or `# STEPS` (case-insensitive); each section has its own header row. Sections may have
-different column counts (CSV ragged rows are fine).
+One `.csv` per test, with two marker-delimited sections. The marker is a row whose first cell is `# CONFIG` or `# STEPS` (case-insensitive); each section has its own header row. Sections may have different column counts (CSV ragged rows are fine).
 
 ```
 # CONFIG
@@ -48,9 +41,7 @@ Three columns: `Section | Key | Value`. Only what the runner actually needs:
 | `description` | one row |
 | `artifacts` | `screenshot_dir` (uses `{timestamp}`); the runner creates this folder up front |
 
-There is **no** `inputs`, `timing`, or `expected_results` block — those values now live on the
-step rows (see below). The parsed spec simply omits those optional top-level keys; the runner
-tolerates their absence.
+There is **no** `inputs`, `timing`, or `expected_results` block — those values now live on the step rows (see below). The parsed spec simply omits those optional top-level keys; the runner tolerates their absence.
 
 ### `# STEPS` section
 
@@ -81,24 +72,15 @@ Runnable columns:
 
 **No `id`, `type`, or `args_mode` columns** — the loader derives them:
 
-- **`id`** is auto-generated (`step_1`, `step_2`, …); the runner only uses it for log/failure
-  messages.
-- **`type`** is inferred: `screenshot_pass` set → `screenshot`; `expected_contains` set →
-  `assert_console_contains`; otherwise the **script basename** (e.g. `key`, `click`, `type_text`,
-  `find_window`, `find_control`).
-- **`args` is always rendered**, so there is no `plain`/`expr` distinction — the runner applies
-  `{placeholder}` substitution to every args string.
+- **`id`** is auto-generated (`step_1`, `step_2`, …); the runner only uses it for log/failure messages.
+- **`type`** is inferred: `screenshot_pass` set → `screenshot`; `expected_contains` set → `assert_console_contains`; otherwise the **script basename** (e.g. `key`, `click`, `type_text`, `find_window`, `find_control`).
+- **`args` is always rendered**, so there is no `plain`/`expr` distinction — the runner applies `{placeholder}` substitution to every args string.
 
-Screenshots stay their own explicit step rows; use the `{ss}` ordering placeholder in the
-`screenshot_pass` / `screenshot_fail` filename (e.g. `{ss}.png`) — see
-[test-spec-format.md](test-spec-format.md). With loops unrolled, the `{ss}` counter runs globally
-`ss_1..ss_N`.
+Screenshots stay their own explicit step rows; use the `{ss}` ordering placeholder in the `screenshot_pass` / `screenshot_fail` filename (e.g. `{ss}.png`) — see [test-spec-format.md](test-spec-format.md). With loops unrolled, the `{ss}` counter runs globally `ss_1..ss_N`.
 
 ## Conditional loops (`# LOOP` / `# END LOOP`)
 
-Most repetition should be **unrolled** (write the rows out). When the number of repetitions is
-**not known ahead of time** — e.g. "keep remediating vulnerable packages until none remain" — use a
-`# LOOP` block instead. It maps to a runner `while` step.
+Most repetition should be **unrolled** (write the rows out). When the number of repetitions is **not known ahead of time** — e.g. "keep remediating vulnerable packages until none remain" — use a `# LOOP` block instead. It maps to a runner `while` step.
 
 ```
 # STEPS
@@ -111,18 +93,11 @@ No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,p
 
 Rules:
 
-- A row whose **first cell (`No` column)** is `# LOOP` opens the block; the matching `# END LOOP`
-  row closes it. The rows in between are the loop **body** (ordinary step rows).
-- The `# LOOP` row itself is the loop **condition**: its `script` + `args` are run before every
-  pass. The loop **continues while the condition's exit code equals `expect_exit`** (default `0`)
-  and **stops** otherwise. With `find_control` (exit `0` = found, `1` = not found), the loop runs
-  while a matching control still exists.
-- The `# LOOP` row may carry a `capture` mapping — applied to the condition's stdout each pass — so
-  the probe can capture the current target's coordinates for the body to act on.
-- `max_iter` (on the `# LOOP` row) caps the iteration count as a safety net against an infinite
-  loop. If omitted, a built-in default applies (`run_test.WHILE_MAX_ITERATIONS`).
-- `{ss}` is continuous across the whole run; it does **not** reset at the start of each
-  iteration, so loop screenshots keep counting up (`ss_7`, `ss_8`, ...).
+- A row whose **first cell (`No` column)** is `# LOOP` opens the block; the matching `# END LOOP` row closes it. The rows in between are the loop **body** (ordinary step rows).
+- The `# LOOP` row itself is the loop **condition**: its `script` + `args` are run before every pass. The loop **continues while the condition's exit code equals `expect_exit`** (default `0`) and **stops** otherwise. With `find_control` (exit `0` = found, `1` = not found), the loop runs while a matching control still exists.
+- The `# LOOP` row may carry a `capture` mapping — applied to the condition's stdout each pass — so the probe can capture the current target's coordinates for the body to act on.
+- `max_iter` (on the `# LOOP` row) caps the iteration count as a safety net against an infinite loop. If omitted, a built-in default applies (`run_test.WHILE_MAX_ITERATIONS`).
+- `{ss}` is continuous across the whole run; it does **not** reset at the start of each iteration, so loop screenshots keep counting up (`ss_7`, `ss_8`, ...).
 
 ## Loader and skill
 
@@ -135,9 +110,6 @@ Rules:
 
 ## Caveats
 
-- `No`, `Main step`, and `Expected` are CSV-only annotations — they never appear in the parsed
-  spec.
-- Complex cell values (`args`, `capture`, screenshot patterns) are stored as JSON so they stay
-  lossless and inspectable; the `csv` module quotes/escapes them safely.
-- `wait_ms` / `poll_*_ms` are raw integer milliseconds. (The runner also still accepts a
-  `timing`-key name there for hand-written YAML, but the CSV format uses literal numbers.)
+- `No`, `Main step`, and `Expected` are CSV-only annotations — they never appear in the parsed spec.
+- Complex cell values (`args`, `capture`, screenshot patterns) are stored as JSON so they stay lossless and inspectable; the `csv` module quotes/escapes them safely.
+- `wait_ms` / `poll_*_ms` are raw integer milliseconds. (The runner also still accepts a `timing`-key name there for hand-written YAML, but the CSV format uses literal numbers.)
