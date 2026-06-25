@@ -46,6 +46,7 @@ if sys.platform == "win32":
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PY = sys.executable
 QUIET = False
+WHILE_MAX_ITERATIONS = 25  # default safety cap for a `while` loop
 
 
 class Ctx:
@@ -179,6 +180,38 @@ def exec_step(step, ctx, local_subs):
     desc = step.get("description", "")
     if not QUIET:
         print(f"\n[{step.get('id','?')}] ({t}) {desc.strip().splitlines()[0] if desc else ''}")
+
+    if t == "while":
+        cond = step["condition"]
+        cscript = cond["script"]
+        cexit = cond.get("expect_exit", 0)
+        max_it = step.get("max_iterations", WHILE_MAX_ITERATIONS)
+        i = 0
+        while i < max_it:
+            csubs = dict(ctx.subs); csubs.update(local_subs)
+            cargs = [render(a, csubs) for a in cond.get("args", [])]
+            if not QUIET:
+                print(f"  ? {' '.join([cscript] + [str(x) for x in cargs])}")
+            cp = subprocess.run([PY, os.path.join(ROOT, cscript)] + [str(a) for a in cargs],
+                                capture_output=True, text=True, encoding="utf-8", errors="replace")
+            if cp.returncode != cexit:
+                if not QUIET:
+                    print(f"    loop condition false (exit {cp.returncode}); stopping after {i} iteration(s)")
+                break
+            if "capture" in cond:
+                capture(cp.stdout, cond["capture"], ctx)
+            i += 1
+            if not QUIET:
+                print(f"\n--- while iter {i} ---")
+            ctx.iter_failed[i] = False
+            local = {"i": i, "n": i}
+            for sub in step["body"]:
+                exec_step(sub, ctx, {**local_subs, **local})
+        else:
+            raise AssertionError(
+                f"while loop did not converge: condition still true after "
+                f"max_iterations={max_it} (vulnerable packages remain)")
+        return
 
     if t == "foreach":
         items = lookup(step["items"], subs)

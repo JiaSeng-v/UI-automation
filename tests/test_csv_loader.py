@@ -75,5 +75,41 @@ class CsvLoaderTests(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
 
 
+class CsvLoaderLoopTests(unittest.TestCase):
+    LOOP_CSV = os.path.join(REPO_ROOT, "tests", "fixtures", "loop_example.csv")
+
+    @classmethod
+    def setUpClass(cls):
+        cls.spec = csv_loader.load(cls.LOOP_CSV)
+
+    def test_while_step_is_built(self):
+        whiles = [s for s in self.spec["steps"] if s["type"] == "while"]
+        self.assertEqual(len(whiles), 1)
+
+    def test_while_condition_body_and_max_iter(self):
+        loop = next(s for s in self.spec["steps"] if s["type"] == "while")
+        # condition comes from the # LOOP row
+        self.assertEqual(loop["condition"]["script"], "scripts/uia/find_control.py")
+        self.assertEqual(loop["condition"]["expect_exit"], 0)
+        self.assertIn("vars.row_x", loop["condition"]["capture"])
+        self.assertEqual(loop["max_iterations"], 5)
+        # body holds the two rows between # LOOP and # END LOOP
+        self.assertEqual(len(loop["body"]), 2)
+        self.assertEqual(loop["body"][0]["type"], "click")
+        self.assertEqual(loop["body"][1]["type"], "key")
+
+    def test_steps_surround_the_loop(self):
+        types = [s["type"] for s in self.spec["steps"]]
+        # one key before, the while, one key after
+        self.assertEqual(types, ["key", "while", "key"])
+
+    def test_all_ids_unique_including_body(self):
+        ids = []
+        for s in self.spec["steps"]:
+            ids.append(s["id"])
+            ids.extend(b["id"] for b in s.get("body", []))
+        self.assertEqual(len(ids), len(set(ids)))
+
+
 if __name__ == "__main__":
     unittest.main()

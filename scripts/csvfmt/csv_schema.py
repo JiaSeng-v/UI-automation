@@ -17,12 +17,20 @@ import json
 CONFIG_MARKER = "# CONFIG"
 STEPS_MARKER = "# STEPS"
 
+# Loop-block markers, used *inside* the # STEPS section to delimit a conditional
+# while-loop. The `# LOOP` row carries the loop condition (its `script` / `args`
+# / `capture` / `expect_exit` / `max_iter` columns); the rows up to the matching
+# `# END LOOP` row form the loop body. See docs/csv-test-format.md.
+LOOP_START_MARKER = "# LOOP"
+LOOP_END_MARKER = "# END LOOP"
+
 # Steps section columns, in order. Readable columns first (authoring-facing),
 # then the technical columns needed to reconstruct a runnable YAML spec.
 # `id` and `type` are NOT columns: the converter auto-generates the id and
 # infers the type. `args` is always rendered, so there is no args_mode.
 STEPS_COLUMNS = [
     "No",                 # phase number (readability only; ignored on import)
+    "step no",            # global sequential step counter (readability only; ignored on import)
     "Main step",          # phase name, first row of each phase (readability only)
     "Trigger",            # human-readable action == step description
     "script",
@@ -35,6 +43,7 @@ STEPS_COLUMNS = [
     "poll_interval_ms",   # literal milliseconds
     "screenshot_pass",    # screenshot filename pattern -> args_expr_on_pass (JSON list)
     "screenshot_fail",    # screenshot filename pattern -> args_expr_on_fail (JSON list)
+    "max_iter",           # # LOOP condition row only: max while-loop iterations (safety cap)
     "Expected",           # expected-result note (readability only; ignored on import)
 ]
 

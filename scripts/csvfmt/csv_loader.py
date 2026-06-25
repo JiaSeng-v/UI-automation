@@ -108,8 +108,31 @@ def _shot_paths(cell, screenshot_dir):
     return [f"{screenshot_dir}/{n}" for n in names]
 
 
+def _build_while(cells, loop_id, body):
+    """Build a `while` step from a `# LOOP` condition row plus its body steps."""
+    def g(name):
+        return cells.get(name)
+
+    condition = {"script": g("script")}
+    if not S.blank(g("args")):
+        condition["args"] = S.loads_list(g("args"))
+    if not S.blank(g("capture")):
+        condition["capture"] = S.loads_obj(g("capture"))
+    if not S.blank(g("expect_exit")):
+        condition["expect_exit"] = int(g("expect_exit"))
+
+    step = {"id": loop_id, "type": "while", "condition": condition, "body": body}
+    if not S.blank(g("max_iter")):
+        step["max_iterations"] = int(g("max_iter"))
+    return step
+
+
 def _build_steps(steps_rows, screenshot_dir):
     """Each row with a `script` is one step (flat list, in order).
+
+    `# LOOP` / `# END LOOP` marker rows (in the `No` column) delimit a
+    conditional while-loop: the `# LOOP` row carries the loop condition and the
+    rows up to `# END LOOP` form the loop body (a nested step list).
 
     The readable `No` / `Main step` / `Expected` columns are authoring
     annotations and are ignored here. Step ids are auto-generated.
@@ -117,14 +140,39 @@ def _build_steps(steps_rows, screenshot_dir):
     if not steps_rows:
         return []
     header = [str(h).strip() for h in steps_rows[0]]
+
+    def cells_for(raw):
+        return {header[i]: _cell(raw, i) for i in range(len(header))}
+
+    def marker(raw):
+        return raw[0].strip().upper() if raw and raw[0] else ""
+
     steps = []
     n = 0
-    for raw in steps_rows[1:]:
-        cells = {header[i]: _cell(raw, i) for i in range(len(header))}
-        if S.blank(cells.get("script")):
+    body_rows = steps_rows[1:]
+    idx = 0
+    while idx < len(body_rows):
+        raw = body_rows[idx]
+        if marker(raw) == S.LOOP_START_MARKER:
+            n += 1
+            loop_id = f"step_{n}"
+            cond_cells = cells_for(raw)
+            inner = []
+            idx += 1
+            while idx < len(body_rows) and marker(body_rows[idx]) != S.LOOP_END_MARKER:
+                inner_cells = cells_for(body_rows[idx])
+                if not S.blank(inner_cells.get("script")):
+                    n += 1
+                    inner.append(_row_to_step(inner_cells, f"step_{n}", screenshot_dir))
+                idx += 1
+            steps.append(_build_while(cond_cells, loop_id, inner))
+            idx += 1  # skip the # END LOOP row
             continue
-        n += 1
-        steps.append(_row_to_step(cells, f"step_{n}", screenshot_dir))
+        cells = cells_for(raw)
+        if not S.blank(cells.get("script")):
+            n += 1
+            steps.append(_row_to_step(cells, f"step_{n}", screenshot_dir))
+        idx += 1
     return steps
 
 

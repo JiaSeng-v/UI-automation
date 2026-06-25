@@ -1,0 +1,14 @@
+# CONFIG
+Section,Key,Value
+name,,loop_example
+description,,"Minimal fixture exercising a # LOOP / # END LOOP while-block."
+artifacts,screenshot_dir,screenshots/{timestamp}
+
+# STEPS
+No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,max_iter,Expected
+1,Setup,Press a key before the loop.,scripts/input/key.py,"[""win""]",100,,,,,,,,,
+# LOOP,Drain list,While a Vulnerable row exists capture its coords.,scripts/uia/find_control.py,"[""{vars.hwnd}"", ""--name"", ""Vulnerable"", ""--control-type"", ""ListItem""]",,"{""vars.row_x"": ""$.rows[1].cols[7]"", ""vars.row_y"": ""$.rows[1].cols[8]""}",0,,,,,,5,Loop while a vulnerable row exists.
+2,,Click the captured row.,scripts/input/click.py,"[""{vars.row_x}"", ""{vars.row_y}""]",200,,,,,,,,,
+2,,Press enter to update it.,scripts/input/key.py,"[""enter""]",200,,,,,,,,,
+# END LOOP,,,,,,,,,,,,,,
+3,Done,Press a key after the loop.,scripts/input/key.py,"[""esc""]",100,,,,,,,,,

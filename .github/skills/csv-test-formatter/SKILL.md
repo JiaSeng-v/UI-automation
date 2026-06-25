@@ -81,8 +81,14 @@ There are **no `id`, `type`, or `args_mode` columns** — the loader auto-genera
    timing-key name.
 4. **Screenshots are their own rows.** Use the `{ss}` ordering placeholder in the filename (e.g.
    `{ss}.png` / `{ss}_FAIL.png`); the loader prepends `{artifacts.screenshot_dir}/`.
-5. **Unroll loops.** There is no `foreach` in CSV — repeat the rows for each iteration. The `{ss}`
-   counter then runs globally `ss1..ssN`.
+5. **Unroll loops with a known count.** There is no `foreach` in CSV — repeat the rows for each
+   iteration. The `{ss}` counter then runs globally `ss_1..ss_N`.
+5b. **Use a `# LOOP` block for unknown-count loops.** When repetition continues *until a condition
+   clears* (e.g. "repeat on each vulnerable package until none remain"), don't guess a count — emit
+   a `# LOOP` / `# END LOOP` block. The `# LOOP` row's `script`/`args` is the condition (loop runs
+   while its exit code == `expect_exit`, default `0`); its `capture` re-reads the current target
+   each pass; `max_iter` caps iterations. Rows up to `# END LOOP` are the body. See
+   `docs/csv-test-format.md` ("Conditional loops").
 6. **Do NOT randomize any values.** Reproducibility requires identical inputs every run — preserve
    the exact literals the user provides.
 7. **Selectors:** prefer `auto_id` + `name` together in `find_control` args; always pass a captured
