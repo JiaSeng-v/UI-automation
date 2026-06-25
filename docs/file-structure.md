@@ -85,8 +85,8 @@ Single-purpose Python CLIs used as primitives by `run_test.py` (and runnable dir
 |---|---|
 | `scripts/web/` | Browser automation over the Chrome DevTools Protocol (`cdp_client`, `browser_launch`, `browser_goto`, `dom_get_html`, `dom_interact`, `dom_query`, `dom_eval`). |
 | `scripts/input/` | Synthetic mouse/keyboard input at screen coordinates (`click`, `type_text`, `key`, `drag`, `scroll`). |
-| `scripts/window/` | Window management — find, focus, maximize, launch, close, and poll-wait (`find_window`, `activate_window`, `maximize_window`, `close_window`, `launch`, `wait_for`). |
-| `scripts/uia/` | UI Automation inspection / text reads (`find_control`, `read_console`, `read_text`, `uia_tree`, `ui_fingerprint`). |
+| `scripts/window/` | Window management — find, focus, maximize, launch, close, poll-wait, and dialog-click (`find_window`, `activate_window`, `maximize_window`, `close_window`, `launch`, `wait_for`, `click_in_dialog`). |
+| `scripts/uia/` | UI Automation inspection / text reads / combo selection (`find_control`, `read_console`, `read_text`, `uia_tree`, `ui_fingerprint`, `select_combo`). |
 | `scripts/files/` | Screenshots, file writes/asserts, clipboard (`screenshot`, `write_text`, `assert_file_exists`, `clipboard`). |
 | `scripts/authoring/` | Interactive YAML authoring REPL (`author_test`). |
 
