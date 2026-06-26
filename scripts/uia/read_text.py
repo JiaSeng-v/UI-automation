@@ -102,6 +102,12 @@ def main():
     p.add_argument("--backend", choices=["uia", "win32"], default="uia")
     p.add_argument("--strip", action="store_true",
                    help="strip leading/trailing whitespace before printing")
+    p.add_argument("--regex", default=None,
+                   help="apply this regex to the value and print only the match; if the "
+                        "pattern has a capturing group, print group(1), else the whole match. "
+                        "Post-processing step (like --strip); prints nothing and exits 1 if "
+                        "the pattern does not match. Useful to extract a token (e.g. a version "
+                        "number) from a longer label for clean capture.")
     p.add_argument("--joiner", default="\n",
                    help="string used to join multi-segment texts() fallback (default newline)")
     a = p.parse_args()
@@ -127,6 +133,12 @@ def main():
     value = read_value(target, a.joiner)
     if a.strip:
         value = value.strip()
+    if a.regex is not None:
+        m = re.search(a.regex, value)
+        if not m:
+            print(f"ERROR: regex {a.regex!r} did not match value {value!r}",
+                  file=sys.stderr); sys.exit(1)
+        value = m.group(1) if m.groups() else m.group(0)
 
     sys.stdout.write(value)
     sys.stdout.flush()
