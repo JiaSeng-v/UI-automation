@@ -100,11 +100,8 @@ See [`scripts-reference.md`](scripts-reference.md) for what every script does, i
 | [`authoring-scenarios.md`](authoring-scenarios.md) | How to author a test case by describing plain steps to an AI agent (Copilot CLI / other agents), which produces a runnable CSV. |
 | [`reproducibility.md`](reproducibility.md) | Why runs stay bit-identical (pinned inputs, UIA targeting, locked deps). |
 | [`troubleshooting.md`](troubleshooting.md) | DPI scaling, multi-monitor, UI-language, and legacy pip path issues. |
+| [`test-cases.md`](test-cases.md) | Catalog of the scenarios under `test_cases/` — one row per scenario with a short description. |
 
 ## `test_cases/`
 
-Holds the declarative YAML scenarios consumed by `run_test.py`. One file per scenario; new scenarios drop in here alongside the existing example.
-
-| File | Purpose |
-|---|---|
-| `powershell_echo_loop.yaml` | Reference scenario: opens PowerShell from the Start menu, echoes four fixed strings, validates each via UIA, screenshots each iteration, then closes the window by clicking the UIA-located Close button. |
+Holds the declarative scenarios consumed by `run_test.py`. One file per scenario; new scenarios drop in here alongside the existing examples. See [`test-cases.md`](test-cases.md) for the catalog of available scenarios.
