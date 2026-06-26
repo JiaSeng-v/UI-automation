@@ -50,7 +50,7 @@ class Ctx:
         self.vars = {}
         self.iter_failed = {}   # n -> bool, used by snapshot step
         self.ss_counter = 1     # screenshot ordering counter, continuous across the whole run
-        ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%SZ")
+        ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d_%H%M%SZ")
         self.subs = {
             "timestamp": ts,
             "inputs": spec.get("inputs", {}),
