@@ -108,4 +108,3 @@ Holds the declarative YAML scenarios consumed by `run_test.py`. One file per sce
 | File | Purpose |
 |---|---|
 | `powershell_echo_loop.yaml` | Reference scenario: opens PowerShell from the Start menu, echoes four fixed strings, validates each via UIA, screenshots each iteration, then closes the window by clicking the UIA-located Close button. |
-| `propertyguru_search_edge.yaml` | Web-automation sample: launches a fresh Microsoft Edge over CDP, loads PropertyGuru (MY), screenshots the home page, searches "Batu Kawan", screenshots the results, opens the first listing, and screenshots its detail page. Targets a live external site, so it is intentionally **not** bit-reproducible. |
