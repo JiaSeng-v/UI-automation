@@ -56,6 +56,7 @@ Windows 10/11, PowerShell, Python via `uv` with pins in `requirements.lock.txt` 
 ## Documentation style (Markdown)
 
 - **Do NOT hard-wrap prose.** Write one paragraph per line; let the editor soft-wrap. Do not insert manual line breaks to fit an ~80/100-column limit — they create noisy diffs.
+- **This applies to every Markdown file in the repo**, not just `docs/` — including `README.md`, `AGENTS.md`, and skill docs under `.github/skills/**/SKILL.md`.
 - Separate paragraphs with a single blank line, not by wrapping a paragraph across multiple lines.
 - **Exceptions (these stay as-is — the "certain scenarios"):** fenced code blocks (```` ``` ````), tables, headings, and list/blockquote markup. Never reflow content inside code fences, and keep each table row and list item on its own line.
 - If a long list item needs a continuation, keep it as part of that item; don't split a sentence into separate hard-wrapped lines.
