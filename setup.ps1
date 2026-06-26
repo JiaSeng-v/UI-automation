@@ -7,4 +7,4 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
     throw "uv not found on PATH. Run install.ps1 instead, or: irm https://astral.sh/uv/install.ps1 | iex"
 }
 uv sync
-Write-Host "Done. Run: uv run python run_test.py test_cases\powershell_echo_loop.yaml"
+Write-Host "Done. Run: uv run python run_test.py test_cases\powershell_echo_loop.csv"

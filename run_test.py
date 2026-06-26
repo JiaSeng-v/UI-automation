@@ -1,7 +1,6 @@
-"""Execute a declarative UI-automation test spec (YAML or CSV).
+"""Execute a declarative UI-automation test spec (CSV).
 
 Usage:
-    python run_test.py <spec.yaml>
     python run_test.py <spec.csv>   # standard-format CSV, loaded in memory
 
 Exit codes:
@@ -10,7 +9,6 @@ Exit codes:
     2  runner error (bad spec, script missing, etc.)
 """
 import argparse, datetime, os, re, subprocess, sys, time
-import yaml
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "scripts", "csvfmt"))
@@ -18,11 +16,8 @@ import csv_loader  # noqa: E402
 
 
 def load_spec(path):
-    """Load a spec from a `.csv` (standard format) or `.yaml`/`.yml` file."""
-    if path.lower().endswith(".csv"):
-        return csv_loader.load(path)
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+    """Load a standard-format `.csv` spec into a runnable dict."""
+    return csv_loader.load(path)
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")

@@ -31,7 +31,7 @@ class CsvLoaderTests(unittest.TestCase):
         for step in steps:
             self.assertIn("id", step)
             self.assertIn("type", step)
-            # readable-only / source columns must not leak into the YAML
+            # readable-only / source columns must not leak into the spec
             for leaked in ("No", "Main step", "Trigger", "Expected",
                            "args_mode", "wait_ms"):
                 self.assertNotIn(leaked, step)

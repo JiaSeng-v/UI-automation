@@ -1,6 +1,6 @@
 # Test cases
 
-Catalog of the declarative scenarios under [`test_cases/`](../test_cases), consumed by `run_test.py`. One file per scenario (YAML or CSV); new scenarios drop in alongside the existing ones.
+Catalog of the declarative scenarios under [`test_cases/`](../test_cases), consumed by `run_test.py`. One CSV file per scenario; new scenarios drop in alongside the existing ones.
 
 | Scenario | Purpose |
 |---|---|

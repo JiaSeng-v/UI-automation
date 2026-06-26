@@ -1,9 +1,8 @@
 """Load a combined CSV test case into a runnable spec dict (in memory).
 
 `run_test.py` calls :func:`load` directly for ``.csv`` specs, so a CSV runs
-straight from disk with no intermediate YAML file. The returned dict is the
-same structure ``run_test.py`` gets from ``yaml.safe_load`` for a ``.yaml``
-spec.
+straight from disk. The returned dict is the runnable spec structure
+``run_test.py`` consumes.
 
 Run a CSV test case via the runner:
 

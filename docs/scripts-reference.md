@@ -10,7 +10,6 @@ Categories:
 - [`scripts/uia/`](#uia--ui-automation-inspection) — read / inspect UI Automation trees and text
 - [`scripts/files/`](#files--files--clipboard) — screenshots, file writes/asserts, clipboard
 - [`scripts/csvfmt/`](#csvfmt--csv-spec-loader) — in-memory CSV-spec loader/schema (internal, not step types)
-- [`scripts/authoring/`](#authoring) — the interactive YAML authoring REPL
 
 ---
 
@@ -212,7 +211,7 @@ uia_tree.py <hwnd> [--max-depth N] [--name N] [--auto-id A] [--control-type T]
 ```
 
 ### `ui_fingerprint.py` — short hash of the foreground UI
-Prints a 16-char SHA-256 prefix from the foreground window's title/class/process, optional rect, and up to 50 direct children. The authoring REPL's recurrence detector uses it to spot a stuck UI.
+Prints a 16-char SHA-256 prefix from the foreground window's title/class/process, optional rect, and up to 50 direct children. Useful for detecting a stuck UI (an unchanged hash across acting steps).
 
 ```
 ui_fingerprint.py [--verbose] [--no-include-rect]
@@ -254,10 +253,10 @@ clipboard.py <read|write|write-stdin> [text]
 
 ## `csvfmt/` — CSV spec loader
 
-Internal modules (not step types) that let `run_test.py` run a `.csv` spec straight from disk, with no intermediate YAML. See [`csv-test-format.md`](csv-test-format.md).
+Internal modules (not step types) that let `run_test.py` run a `.csv` spec straight from disk. See [`csv-test-format.md`](csv-test-format.md).
 
 ### `csv_loader.py` — load a CSV test case into a spec dict
-`run_test.py` calls `load()` directly for `.csv` specs; the returned dict matches what `yaml.safe_load` gives for a `.yaml` spec. Run as a CLI to print the parsed spec as JSON for debugging.
+`run_test.py` calls `load()` directly for `.csv` specs; the returned dict is the runnable spec structure the runner consumes. Run as a CLI to print the parsed spec as JSON for debugging.
 
 ```
 csv_loader.py <csv>
@@ -265,14 +264,3 @@ csv_loader.py <csv>
 
 ### `csv_schema.py` — shared CSV schema (not a step)
 Defines the combined-CSV layout: marker-delimited `# CONFIG` and `# STEPS` sections, column names, and loop markers. Imported by the loader.
-
----
-
-## `authoring/`
-
-### `author_test.py` — interactive YAML authoring REPL
-Builds a runnable YAML spec one step line at a time, executing each live against the real UI so captured vars accumulate. Two safety halts: ambiguous `find_control` selectors and 3 identical UI fingerprints in a row. (The recommended path is describing steps to an AI agent — see [`authoring-scenarios.md`](authoring-scenarios.md).)
-
-```
-author_test.py <out_yaml>
-```

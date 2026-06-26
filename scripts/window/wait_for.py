@@ -1,7 +1,7 @@
 """Poll find_window.py or find_control.py until it succeeds or the timeout expires.
 
 On success, stdout is whatever the wrapped helper printed (so `capture:` rules
-in YAML work identically to a direct call). On timeout, exits 1 with a message
+work identically to a direct call). On timeout, exits 1 with a message
 on stderr and the last failure output.
 """
 import argparse, os, subprocess, sys, time

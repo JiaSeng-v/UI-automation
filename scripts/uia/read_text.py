@@ -9,7 +9,7 @@ without their own Win32 hwnd, so addressing by `<parent_hwnd> + selectors`
 is the only thing that works for them.
 
 Prints the value on stdout with no surrounding quotes and no trailing newline,
-so YAML `capture: { vars.x: "$.stdout" }` rules get the value verbatim.
+so `capture: { vars.x: "$.stdout" }` rules get the value verbatim.
 Tries window_text() first, then texts() as a fallback (multiline Documents).
 Exits 1 if the hwnd / selector resolves to nothing.
 """

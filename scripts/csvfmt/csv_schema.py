@@ -1,4 +1,4 @@
-"""Shared schema for the CSV <-> YAML test-case converters.
+"""Shared schema for the CSV test-case loader.
 
 A test case is a single combined CSV with two marker-delimited sections:
 
@@ -25,7 +25,7 @@ LOOP_START_MARKER = "# LOOP"
 LOOP_END_MARKER = "# END LOOP"
 
 # Steps section columns, in order. Readable columns first (authoring-facing),
-# then the technical columns needed to reconstruct a runnable YAML spec.
+# then the technical columns needed to reconstruct a runnable spec.
 # `id` and `type` are NOT columns: the converter auto-generates the id and
 # infers the type. `args` is always rendered, so there is no args_mode.
 STEPS_COLUMNS = [
@@ -50,7 +50,7 @@ STEPS_COLUMNS = [
 # Config section columns.
 CONFIG_COLUMNS = ["Section", "Key", "Value"]
 
-# Top-level spec key order preserved on YAML emit.
+# Top-level spec key order preserved in the loaded spec dict.
 SPEC_KEY_ORDER = [
     "name", "description", "inputs", "artifacts", "timing",
     "steps", "expected_results",

@@ -64,8 +64,7 @@ See the [*Token-efficient Copilot usage*](../README.md#token-efficient-copilot-u
 
 ## See also
 
-- [csv-test-format.md](csv-test-format.md) — full CSV column and section reference.
-- [test-spec-format.md](test-spec-format.md) — step types, placeholders, and capture syntax.
+- [csv-test-format.md](csv-test-format.md) — full CSV column and section reference, step types, placeholders, and capture syntax.
 - [scripts-reference.md](scripts-reference.md) — catalog of every step script under `scripts/`.
 - [`AGENTS.md`](../AGENTS.md) — rules the agent follows (auto-loaded).
 - [troubleshooting.md](troubleshooting.md) — DPI, multi-monitor, UI-language gotchas.

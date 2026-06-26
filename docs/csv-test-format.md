@@ -76,7 +76,7 @@ Runnable columns:
 - **`type`**: inferred — `screenshot_pass` set → `screenshot`; `expected_contains` set → `assert_console_contains`; otherwise the **script basename** (e.g. `key`, `click`, `find_control`).
 - **`args`**: always rendered (`{placeholder}` substitution applied to every args string), so there is no `plain`/`expr` distinction.
 
-Screenshots are their own step rows; use the `{ss}` ordering placeholder in the filename (e.g. `{ss}.png`) — see [test-spec-format.md](test-spec-format.md). With loops unrolled, `{ss}` counts globally `ss_1..ss_N`.
+Screenshots are their own step rows; use the `{ss}` ordering placeholder in the filename (e.g. `{ss}.png`). With loops unrolled, `{ss}` counts globally `ss_1..ss_N`.
 
 ## Conditional loops (`# LOOP` / `# END LOOP`)
 

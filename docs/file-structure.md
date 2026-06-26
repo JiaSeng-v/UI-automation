@@ -13,8 +13,8 @@ A guided tour of every file and folder in this repo, so you can find your way ar
 | `install-copilot.ps1` | Optional installer for the GitHub Copilot CLI — sets up both the standalone `copilot` CLI and the `gh copilot` extension (whichever is missing) and triggers interactive login. |
 | `setup.ps1` | Local convenience wrapper that runs `uv sync` when `uv` is already installed. |
 | `run.ps1` | Thin shortcut wrapper: `.\run.ps1 <spec> [-q]` → `uv run python run_test.py <spec> [-q]`. Lets you invoke a scenario without going through an LLM. |
-| `run_test.py` | YAML test-spec runner (see [Entry points](#entry-points)). |
-| `pyproject.toml` | Project metadata + direct dependencies (`pyautogui`, `pywinauto`, `Pillow`, `PyYAML`). Pins Python to `>=3.10,<3.13`. |
+| `run_test.py` | CSV test-spec runner (see [Entry points](#entry-points)). |
+| `pyproject.toml` | Project metadata + direct dependencies (`pyautogui`, `pywinauto`, `Pillow`, `websocket-client`). Pins Python to `>=3.10,<3.13`. |
 | `requirements.txt` | Human-edited top-level requirements list (mirrors `pyproject.toml` deps). |
 | `requirements.lock.txt` | Fully resolved, pinned dependency list for `pip` users. |
 | `uv.lock` | `uv`-generated lockfile pinning every transitive dependency with content hashes. |
@@ -24,8 +24,8 @@ A guided tour of every file and folder in this repo, so you can find your way ar
 | `screenshots/` | Per-run screenshot artifacts written under `screenshots/{timestamp}/` (not committed). |
 | `docs/` | Markdown documentation — see [docs/](#docs). |
 | `scripts/` | Primitive Python helpers invoked by `run_test.py`, grouped into category subfolders — see [scripts/](#scripts) and [scripts-reference.md](scripts-reference.md). |
-| `test_cases/` | Declarative YAML scenarios — see [test_cases/](#test_cases). |
-| `tests/` | Stdlib `unittest` coverage for the helper scripts and the authoring REPL. Run with `uv run python -m unittest discover -s tests -v`. |
+| `test_cases/` | Declarative CSV scenarios — see [test_cases/](#test_cases). |
+| `tests/` | Stdlib `unittest` coverage for the helper scripts and the CSV loader. Run with `uv run python -m unittest discover -s tests -v`. |
 
 ## Entry points
 
@@ -58,14 +58,14 @@ Lightweight alternative for developers who already have `uv` installed. `cd`s to
 Thin PowerShell wrapper around `uv run python run_test.py`. Takes the spec path as its first argument and forwards any remaining flags (e.g. `-q`). `Set-Location $PSScriptRoot` lets you call it from any working directory, and it propagates the runner's exit code unchanged.
 
 ```powershell
-.\run.ps1 test_cases\powershell_echo_loop.yaml
-.\run.ps1 test_cases\powershell_echo_loop.yaml -q
+.\run.ps1 test_cases\powershell_echo_loop.csv
+.\run.ps1 test_cases\powershell_echo_loop.csv -q
 ```
 
 ### `run_test.py`
-The test runner. Given a YAML spec, it:
+The test runner. Given a CSV spec, it:
 
-- Parses `inputs`, `artifacts`, `timing`, and `steps` blocks (format documented in [`test-spec-format.md`](test-spec-format.md)).
+- Parses the `# CONFIG` and `# STEPS` sections into `inputs`, `artifacts`, `timing`, and `steps` (format documented in [`csv-test-format.md`](csv-test-format.md)).
 - Enables per-monitor v2 DPI awareness so virtual-pixel clicks line up with physical-pixel UIA rectangles on HiDPI displays.
 - Walks `steps` in order, dispatching each one by invoking the matching `scripts/*.py` as a subprocess (with `args` / `args_expr` substituted from captured variables and inputs).
 - Captures stdout from helper scripts and stores fields in `vars.*` for later steps (see `capture:` clauses).
@@ -75,7 +75,7 @@ The test runner. Given a YAML spec, it:
 
 Pass `-q` / `--quiet` to suppress per-step headers and successful subcommand stdout — useful when running under an LLM to keep token usage down. Failure output, stderr, and the final `RESULT` line are always shown.
 
-Usage: `uv run python run_test.py test_cases\<scenario>.yaml [-q]`.
+Usage: `uv run python run_test.py test_cases\<scenario>.csv [-q]`.
 
 ## `scripts/`
 
@@ -88,7 +88,7 @@ Single-purpose Python CLIs used as primitives by `run_test.py` (and runnable dir
 | `scripts/window/` | Window management — find, focus, maximize, launch, close, poll-wait, and dialog-click (`find_window`, `activate_window`, `maximize_window`, `close_window`, `launch`, `wait_for`, `click_in_dialog`). |
 | `scripts/uia/` | UI Automation inspection / text reads / combo selection (`find_control`, `read_console`, `read_text`, `uia_tree`, `ui_fingerprint`, `select_combo`). |
 | `scripts/files/` | Screenshots, file writes/asserts, clipboard (`screenshot`, `write_text`, `assert_file_exists`, `clipboard`). |
-| `scripts/authoring/` | Interactive YAML authoring REPL (`author_test`). |
+| `scripts/csvfmt/` | In-memory CSV-spec loader/schema consumed by `run_test.py` (`csv_loader`, `csv_schema`). |
 
 See [`scripts-reference.md`](scripts-reference.md) for what every script does, its step `type`, arguments, and exit codes.
 
@@ -96,7 +96,7 @@ See [`scripts-reference.md`](scripts-reference.md) for what every script does, i
 |---|---|
 | [`file-structure.md`](file-structure.md) | This document — layout of the repo. |
 | [`scripts-reference.md`](scripts-reference.md) | What every `scripts/` helper does — step `type`, arguments, exit codes, grouped by category. |
-| [`test-spec-format.md`](test-spec-format.md) | Reference for YAML spec keys, step types, placeholder syntax, and `capture` rules. |
+| [`csv-test-format.md`](csv-test-format.md) | Reference for the CSV spec layout — `# CONFIG`/`# STEPS` sections, columns, step types, placeholders, and `capture` rules. |
 | [`authoring-scenarios.md`](authoring-scenarios.md) | How to author a test case by describing plain steps to an AI agent (Copilot CLI / other agents), which produces a runnable CSV. |
 | [`reproducibility.md`](reproducibility.md) | Why runs stay bit-identical (pinned inputs, UIA targeting, locked deps). |
 | [`troubleshooting.md`](troubleshooting.md) | DPI scaling, multi-monitor, UI-language, and legacy pip path issues. |

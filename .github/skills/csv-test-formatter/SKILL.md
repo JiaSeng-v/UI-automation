@@ -7,8 +7,8 @@ description: Reformat a rough, hand-authored CSV test case into the standard ui-
 
 Turn a user's **rough CSV** describing a Windows UI-automation scenario into a **standard-format
 CSV** that `run_test.py` loads directly (`scripts/csvfmt/csv_loader.py`). You only **reformat and
-rearrange** the user's intent into the canonical layout — you do not run tests, and you do not emit
-YAML. CSV runs straight from disk:
+rearrange** the user's intent into the canonical layout — you do not run tests. CSV runs straight
+from disk:
 
 ```powershell
 .\run.ps1 test_cases\<name>.csv -q

@@ -94,7 +94,7 @@ Write-Host " UI-automation is installed at: $RepoDir" -ForegroundColor Green
 Write-Host ""
 Write-Host " Run the example scenario:" -ForegroundColor Green
 Write-Host "   cd `"$RepoDir`"" -ForegroundColor White
-Write-Host "   uv run python run_test.py test_cases\powershell_echo_loop.yaml" -ForegroundColor White
+Write-Host "   uv run python run_test.py test_cases\powershell_echo_loop.csv" -ForegroundColor White
 Write-Host ""
 Write-Host " Note: that test will momentarily take control of your" -ForegroundColor Green
 Write-Host " mouse/keyboard to open and drive PowerShell." -ForegroundColor Green

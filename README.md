@@ -1,6 +1,6 @@
 # UI-automation
 
-Declarative UI-automation toolkit for Windows desktop apps. Drives mouse, keyboard, screenshots, and UIA-based validation from simple YAML scenarios.
+Declarative UI-automation toolkit for Windows desktop apps. Drives mouse, keyboard, screenshots, and UIA-based validation from simple CSV scenarios.
 
 ## Install
 
@@ -16,13 +16,12 @@ This installs `uv` + Python + `git` as needed, clones the repo to `%USERPROFILE%
 
 ```powershell
 cd $HOME\UI-automation
-.\run.ps1 test_cases\powershell_echo_loop.yaml
+.\run.ps1 test_cases\powershell_echo_loop.csv
 ```
 
-(equivalent to `uv run python run_test.py test_cases\powershell_echo_loop.yaml`.)
+(equivalent to `uv run python run_test.py test_cases\powershell_echo_loop.csv`.)
 
-You can also author and run a test case as a readable CSV file — `run.ps1` loads the `.csv`
-directly (no intermediate YAML):
+Scenarios are authored as readable CSV files — `run.ps1` loads the `.csv` directly:
 
 ```powershell
 .\run.ps1 test_cases\powershell_echo_loop.csv -q
@@ -59,7 +58,7 @@ See [`docs/authoring-scenarios.md`](docs/authoring-scenarios.md) for the full wo
 uv run python -m unittest discover -s tests -v
 ```
 
-22 stdlib `unittest` cases covering the authoring tool — no extra dev dependencies required.
+37 stdlib `unittest` cases covering the helper scripts and the CSV loader — no extra dev dependencies required.
 
 ## Using with Copilot CLI
 
@@ -87,14 +86,13 @@ Driving the runner through Copilot CLI is convenient but costs LLM tokens per tu
 
 - **Skip the LLM entirely** for routine runs — invoke `.\run.ps1 <spec>` directly. This is the biggest saving (~0 LLM tokens).
 - **Pass `-q`** when Copilot does run the scenario; this strips per-step echo from the output the model sees.
-- **Scope the prompt** so Copilot doesn't speculatively read source files. Example: *"Run `.\run.ps1 ... -q`. Report only the exit code and any FAIL lines. Do not read `run_test.py` or the YAML."*
+- **Scope the prompt** so Copilot doesn't speculatively read source files. Example: *"Run `.\run.ps1 ... -q`. Report only the exit code and any FAIL lines. Do not read `run_test.py` or the CSV spec."*
 - **Batch follow-ups** into one prompt — each new turn replays the whole conversation, so 3 small turns cost ~3x one combined turn.
 
 ## Documentation
 
 - [File structure](docs/file-structure.md) — what each file and folder in the repo is for.
-- [Test-spec format](docs/test-spec-format.md) — YAML keys, step types, placeholders, capture syntax.
-- [CSV test-case format](docs/csv-test-format.md) — author/run test cases as `.csv`; the runner loads CSV directly, and the `csv-test-formatter` skill tidies rough CSV into the standard layout.
+- [CSV test-case format](docs/csv-test-format.md) — author/run test cases as `.csv`; spec layout, step types, placeholders, capture syntax. The `csv-test-formatter` skill tidies rough CSV into the standard layout.
 - [Authoring scenarios with AI](docs/authoring-scenarios.md) — describe plain steps to an agent and get a runnable CSV.
 - [`AGENTS.md`](AGENTS.md) — auto-loaded instructions for AI coding agents working in this repo.
 - [Reproducibility](docs/reproducibility.md) — how runs stay bit-identical.

@@ -6,32 +6,31 @@ This file follows the [agents.md](https://agents.md/) convention and is loaded a
 
 ## What this repo is
 
-`ui-auto` is a declarative UI-automation toolkit for Windows desktop apps. Test cases are YAML files in `test_cases/`, executed by `run_test.py` (entry point: `.\run.ps1 <spec>`). Each step in a spec maps to a script under `scripts/`.
+`ui-auto` is a declarative UI-automation toolkit for Windows desktop apps. Test cases are CSV files in `test_cases/`, executed by `run_test.py` (entry point: `.\run.ps1 <spec>`). Each step in a spec maps to a script under `scripts/`.
 
 ## Authoritative references (read on demand, not eagerly)
 
 - `README.md` — install, run, top-level usage.
-- `docs/test-spec-format.md` — YAML keys, step types, placeholders, capture syntax.
-- `docs/csv-test-format.md` — authoring/running test cases as `.csv`; the runner loads CSV directly via the in-memory loader in `scripts/csvfmt/`, and the `csv-test-formatter` skill (`.github/skills/`) reformats rough CSV into the standard layout.
+- `docs/csv-test-format.md` — CSV spec layout (`# CONFIG`/`# STEPS` sections, columns, step types, placeholders, capture syntax); the runner loads CSV directly via the in-memory loader in `scripts/csvfmt/`, and the `csv-test-formatter` skill (`.github/skills/`) reformats rough CSV into the standard layout.
 - `docs/authoring-scenarios.md` — how to author a test case by describing plain steps to an AI agent (Copilot CLI, etc.).
 - `docs/file-structure.md` — what every file/folder is for.
 - `docs/reproducibility.md` — why runs must be bit-identical.
 - `docs/troubleshooting.md` — DPI, multi-monitor, UI language gotchas.
-- `test_cases/powershell_echo_loop.yaml` — canonical example (also shows `foreach` + UIA validation).
+- `test_cases/powershell_echo_loop.csv` — canonical example.
 - `scripts/*.py` — one script per step `type`.
 
 ## Hard rules when authoring or editing a test case
 
-1. Top-level YAML keys MUST be: `name`, `description`, `inputs`, `artifacts`, `timing`, `steps`, `expected_results`. Do not invent new top-level keys.
-2. **Do NOT randomize `inputs`.** Reproducibility requires identical values every run.
-3. Every step has `id`, `type`, `description`. Reference timing via `wait_after: <key_from_timing_block>` — never inline ms literals.
+1. A test case is ONE `.csv` with two marker-delimited sections: `# CONFIG` (Section/Key/Value rows: `name`, `description`, `artifacts` → `screenshot_dir`) and `# STEPS` (one row per step). Do not invent new config keys.
+2. **Do NOT randomize values.** Reproducibility requires identical values every run.
+3. Every real step row needs a `script` and a `Trigger` (becomes the step `description`). Set delays via the `wait_ms` column in **literal milliseconds**.
 4. **Selectors:** prefer `auto_id` + `name` together. `scripts/uia/find_control.py` tries AutomationId first, falls back to name. Always pass `parent=` a captured window hwnd.
-5. **Capture** window/control handles with `capture: { vars.<name>: "$.cols[1]" }` on `find_window` / `find_control` steps; reference them as `{vars.<name>}` in later steps.
-6. Artifact paths use `{timestamp}` (substituted at run start, UTC). Default screenshot dir: `screenshots/{timestamp}`. For ordered screenshot names use the `{ss}` placeholder in `screenshot` step filenames (renders `ss_1`, `ss_2`, ...; continuous across the whole run including loops, so it never restarts — optionally add `{n}` for the iteration index, e.g. `{ss}_{n}_name.png`).
-7. For console assertions use `assert_console_contains` with `poll_total_ms` and `poll_interval_ms` from the `timing` block.
+5. **Capture** window/control handles with the `capture` column as JSON (e.g. `{"vars.<name>": "$.cols[1]"}`) on `find_window` / `find_control` steps; reference them as `{vars.<name>}` in later steps.
+6. Artifact paths use `{timestamp}` (substituted at run start, UTC). Default screenshot dir: `screenshots/{timestamp}`. For ordered screenshot names use the `{ss}` placeholder in `screenshot_pass` / `screenshot_fail` filenames (renders `ss_1`, `ss_2`, ...; continuous across the whole run including loops, so it never restarts — optionally add `{n}` for the iteration index, e.g. `{ss}_{n}_name.png`).
+7. For console assertions set the `expected_contains` column (with `poll_total_ms` / `poll_interval_ms` in literal milliseconds).
 8. For file assertions use `assert_file` (supports `--negate`, `--contains`, `--delete`).
 9. Do **not** invent new step types. If something doesn't fit, ask before extending the schema.
-10. When emitting a new test case, output ONE complete YAML in a single fenced block; no surrounding prose unless the user asks for an explanation.
+10. When emitting a new test case, output ONE complete CSV in a single fenced block; no surrounding prose unless the user asks for an explanation.
 
 ## Iterating on failures
 
@@ -41,7 +40,7 @@ When the user pastes back a failing step id + stderr, respond with the **smalles
 
 See the [README](README.md) for install, run, and exit-code semantics. Quick reference:
 
-- Run a scenario: `.\run.ps1 test_cases\<name>.yaml -q`
+- Run a scenario: `.\run.ps1 test_cases\<name>.csv -q`
 - Unit tests: `uv run python -m unittest discover -s tests -v`
 
 ## Environment
