@@ -24,7 +24,21 @@ You never hand-write `script` paths, `args`, or UIA selectors — the agent pick
 
 ## Worked example
 
-Give the agent steps like this:
+The screenshots below walk through the flow end to end, using a Visual Studio "console app" scenario.
+
+**1. Define the test as plain numbered steps:**
+
+![Scenario written as plain numbered steps in a spreadsheet](../test_cases/sample/1-define-test.png)
+
+**2. Prompt the agent to convert and run it:**
+
+![Copilot CLI reading the steps and running the test case](../test_cases/sample/2-prompt-ai-to-proceed.png)
+
+**3. Review the result — the agent reports `RESULT: PASS`:**
+
+![Copilot CLI summarizing the passing run and what the test does](../test_cases/sample/3-ai-review-result.png)
+
+A smaller Notepad example: give the agent steps like this:
 
 ```text
 1. Open Notepad from the Start menu.
