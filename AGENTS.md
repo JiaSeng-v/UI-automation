@@ -23,7 +23,7 @@ This file follows the [agents.md](https://agents.md/) convention and is loaded a
 
 1. A test case is ONE `.csv` with two marker-delimited sections: `# CONFIG` (Section/Key/Value rows: `name`, `description`, `artifacts` → `screenshot_dir`) and `# STEPS` (one row per step). Do not invent new config keys.
 2. **Do NOT randomize values.** Reproducibility requires identical values every run.
-3. Every real step row needs a `script` and a `Trigger` (becomes the step `description`). Set delays via the `wait_ms` column in **literal milliseconds**.
+3. Every real step row needs a `script` and a `Trigger` (becomes the step `description`). Set delays via the `wait_ms` column in **literal milliseconds**. Always populate the `step no` column with a sequential global counter (1, 2, 3… across every step row, including loop bodies) — don't leave it blank.
 4. **Selectors:** prefer `auto_id` + `name` together. `scripts/uia/find_control.py` tries AutomationId first, falls back to name. Always pass `parent=` a captured window hwnd.
 5. **Capture** window/control handles with the `capture` column as JSON (e.g. `{"vars.<name>": "$.cols[1]"}`) on `find_window` / `find_control` steps; reference them as `{vars.<name>}` in later steps.
 6. Artifact paths use `{timestamp}` (substituted at run start, UTC). Default screenshot dir: `screenshots/{timestamp}`. For ordered screenshot names use the `{ss}` placeholder in `screenshot_pass` / `screenshot_fail` filenames (renders `ss_1`, `ss_2`, ...; continuous across the whole run including loops, so it never restarts — optionally add `{n}` for the iteration index, e.g. `{ss}_{n}_name.png`).
