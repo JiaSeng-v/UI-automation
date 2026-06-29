@@ -45,6 +45,7 @@ No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,p
 | Column | Meaning |
 |---|---|
 | `No` | Phase number; repeat or leave blank to continue within a phase (readability only). |
+| `step no` | Global sequential step counter (1, 2, 3… across every step row). |
 | `Main step` | Phase name, on the first row of each phase only (readability only). |
 | `Trigger` | Human-readable action → becomes the step `description`. |
 | `script` | Path under `scripts/`; required for every real step. A blank-`script` row is skipped. |

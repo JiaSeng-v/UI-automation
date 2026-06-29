@@ -52,6 +52,7 @@ Readable columns (authoring-facing, **ignored on import**):
 | Column | Meaning |
 |---|---|
 | **No** | Phase number. Repeated or blank to continue within a phase. |
+| **step no** | Global sequential step counter (1, 2, 3… across every step row). |
 | **Main step** | Phase name, on the first row of each phase only. |
 | **Trigger** | Human-readable action — becomes the step's `description`. |
 | **Expected** | Expected-result note. Documentation only. |

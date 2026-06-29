@@ -8,7 +8,7 @@ Categories:
 - [`scripts/input/`](#input--mousekeyboard) — synthetic mouse / keyboard input (screen coordinates)
 - [`scripts/window/`](#window--window-management) — find, focus, maximize, launch, close windows
 - [`scripts/uia/`](#uia--ui-automation-inspection) — read / inspect UI Automation trees and text
-- [`scripts/files/`](#files--files--clipboard) — screenshots, file writes/asserts, clipboard
+- [`scripts/files/`](#files--files--clipboard) — screenshots, file writes/asserts, clipboard, home dir
 - [`scripts/csvfmt/`](#csvfmt--csv-spec-loader) — in-memory CSV-spec loader/schema (internal, not step types)
 
 ---
@@ -141,7 +141,7 @@ close_window.py <hwnd> [--grace-ms 2000] [--force]
 Prints `pid`. With `--wait-window`, prints `pid hwnd left top right bottom title` once a matching window appears. Exit: 0 OK, 1 launch failed, 2 wait timed out, 3 bad usage.
 
 ```
-launch.py <exe> [--args ...] [--wait-window REGEX] [--timeout-ms N]
+launch.py <exe> [--args ...] [--wait-window REGEX] [--wait-timeout-ms 10000]
 ```
 
 ### `wait_for.py` — poll find_window / find_control until success
@@ -157,6 +157,13 @@ Finds a dialog by `title_regex` and clicks `--button` if present. Tolerant: a mi
 ```
 click_in_dialog.py <title_regex> --button NAME [--auto-id A] [--match exact|contains|regex]
                    [--find-backend uia|win32] [--timeout 4.0] [--required]
+```
+
+### `find_devenv.py` — locate the Visual Studio `devenv.exe`
+Finds the installed VS executable, edition/version/channel agnostic: tries `vswhere` (`-latest`, then `-prerelease`), the `VS7` registry keys, and a Program Files scan. `--path` (or `$VSDEVENV`) forces a path; `--prerelease` prefers Insiders/Preview. Prints the full `devenv.exe` path as the **first** line (`$.cols[0]`). Exit 2 if no VS install is found.
+
+```
+find_devenv.py [--path EXE] [--prerelease]
 ```
 
 ---
@@ -247,6 +254,13 @@ assert_file_exists.py <path> [--contains TEXT] [--negate] [--delete]
 
 ```
 clipboard.py <read|write|write-stdin> [text]
+```
+
+### `print_home.py` — print the user's home directory
+Resolves `~` to the real profile path on this machine (any drive) and prints it as the **first** line (`$.cols[0]`). Capture as `{vars.home}` to build absolute, machine-portable paths.
+
+```
+print_home.py
 ```
 
 ---

@@ -27,8 +27,7 @@ Scenarios are authored as readable CSV files — `run.ps1` loads the `.csv` dire
 .\run.ps1 test_cases\powershell_echo_loop.csv -q
 ```
 
-See [CSV test-case format](docs/csv-test-format.md) for the file layout, the in-memory loader, and
-the `csv-test-formatter` skill.
+See [CSV test-case format](docs/csv-test-format.md) for the file layout, the in-memory loader, and the `csv-test-formatter` skill.
 
 The example opens PowerShell via Start menu, echoes 4 fixed strings, validates each via UIA, saves a screenshot per iteration, then closes the window with a mouse-click on the UIA-located Close button.
 

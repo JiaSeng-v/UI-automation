@@ -41,8 +41,7 @@ Zero-state bootstrap for a clean Windows 10/11 machine. In order it:
 Designed to be invoked via `irm https://raw.githubusercontent.com/william051200/UI-automation/main/install.ps1 | iex`.
 
 ### `install-copilot.ps1`
-Optional, standalone installer for the GitHub Copilot CLI — useful for users whose machines
-don't have it set up yet. Idempotent; in order it:
+Optional, standalone installer for the GitHub Copilot CLI — useful for users whose machines don't have it set up yet. Idempotent; in order it:
 
 1. Installs the standalone agentic `copilot` CLI via `winget install GitHub.Copilot` (falling back to `npm install -g @github/copilot`, installing Node.js LTS first if needed).
 2. Installs the GitHub `gh` CLI via `winget` if missing.
@@ -85,10 +84,11 @@ Single-purpose Python CLIs used as primitives by `run_test.py` (and runnable dir
 |---|---|
 | `scripts/web/` | Browser automation over the Chrome DevTools Protocol (`cdp_client`, `browser_launch`, `browser_goto`, `dom_get_html`, `dom_interact`, `dom_query`, `dom_eval`). |
 | `scripts/input/` | Synthetic mouse/keyboard input at screen coordinates (`click`, `type_text`, `key`, `drag`, `scroll`). |
-| `scripts/window/` | Window management — find, focus, maximize, launch, close, poll-wait, and dialog-click (`find_window`, `activate_window`, `maximize_window`, `close_window`, `launch`, `wait_for`, `click_in_dialog`). |
+| `scripts/window/` | Window management — find, focus, maximize, launch, close, poll-wait, and dialog-click (`find_window`, `activate_window`, `maximize_window`, `close_window`, `launch`, `wait_for`, `click_in_dialog`, `find_devenv`). |
 | `scripts/uia/` | UI Automation inspection / text reads / combo selection (`find_control`, `read_console`, `read_text`, `uia_tree`, `ui_fingerprint`, `select_combo`). |
-| `scripts/files/` | Screenshots, file writes/asserts, clipboard (`screenshot`, `write_text`, `assert_file_exists`, `clipboard`). |
+| `scripts/files/` | Screenshots, file writes/asserts, clipboard, home dir (`screenshot`, `write_text`, `assert_file_exists`, `clipboard`, `print_home`). |
 | `scripts/csvfmt/` | In-memory CSV-spec loader/schema consumed by `run_test.py` (`csv_loader`, `csv_schema`). |
+| `scripts/dotnet/` | .NET version-discovery helper for VS/SDK scenarios (`aspnet_majors`). |
 
 See [`scripts-reference.md`](scripts-reference.md) for what every script does, its step `type`, arguments, and exit codes.
 
