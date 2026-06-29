@@ -71,6 +71,7 @@ There are **no `id`, `type`, or `args_mode` columns** — the loader auto-genera
 7. **Selectors:** prefer `auto_id` + `name` together in `find_control` args; always pass a captured window hwnd as the control's parent.
 8. Keep only `name`, `description`, and `artifacts` in `# CONFIG` (the simplified CSV config). Do not add `inputs`, `timing`, or `expected_results` blocks.
 9. **Minimize waits.** Prefer polling assertions (`expected_contains` with `poll_total_ms`/`poll_interval_ms`, or `wait_for`) over long fixed `wait_ms` when there's an observable state to wait on; when a fixed `wait_ms` is needed, use the smallest reliable value plus a small margin — don't pad delays. Keep values identical every run (no randomization).
+10. **Keep paths machine-portable.** Never hardcode user/profile paths (e.g. `C:\Users\<you>`) — resolve home via `scripts/files/print_home.py` → `{vars.home}`, locate VS via `scripts/window/find_devenv.py` → `{vars.devenv}`, use `{timestamp}` for artifact dirs, match window titles by regex, and discover machine-varying values at runtime so the case runs on any PC/user.
 
 ## Workflow
 
