@@ -41,7 +41,7 @@ No,step no,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_co
 6,33,,Change into the project directory.,scripts/input/type_text.py,"[""cd net{vars.major}"",""--interval"",""0.06""]",300,,,,,,,,,,
 6,34,,Submit.,scripts/input/key.py,"[""enter""]",1000,,,,,,,,,,
 7,35,Publish,Publish self-contained for win-x86 and echo the result.,scripts/input/type_text.py,"[""dotnet publish -r win-x86 --self-contained > pub_net{vars.major}.txt & type pub_net{vars.major}.txt"",""--interval"",""0.06""]",300,,,,,,,,,,
-7,36,,Submit (publish runs; then prints the result).,scripts/input/key.py,"[""enter""]",20000,,,,,,,,,,Publish succeeds.
+7,36,,Submit (publish runs; then prints the result).,scripts/input/key.py,"[""enter""]",10000,,,,,,,,,,Publish succeeds.
 8,37,Screenshot publish,Capture the publish result.,scripts/files/screenshot.py,,,,,,,,"[""{ss}.png""]","[""{ss}_FAIL.png""]",,Per-version publish screenshot saved.,
 8,38,,Assert the publish produced the project output (build succeeded).,scripts/files/assert_file_exists.py,"[""{vars.home}\\test\\net{vars.major}\\pub_net{vars.major}.txt"",""--contains"",""net{vars.major}.dll""]",500,,,,,,,,,,Publish produced the dll.
 9,39,Open deps in VS,Open the deps.json in Visual Studio.,scripts/window/launch.py,"[""{vars.devenv}"",""--wait-window"",""Microsoft Visual Studio( Insiders)?$"",""--backend"",""uia"",""--wait-timeout-ms"",""120000"",""--args"",""{vars.home}\\test\\net{vars.major}\\bin\\Release\\net{vars.major}.0\\win-x86\\publish\\net{vars.major}.deps.json""]",10000,"{""vars.vs_iter"": ""$.cols[1]""}",,,,,,,,,Visual Studio opens the deps file.
