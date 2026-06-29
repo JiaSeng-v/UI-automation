@@ -113,3 +113,4 @@ Rules:
 - `No`, `Main step`, and `Expected` are CSV-only annotations — they never reach the parsed spec.
 - Complex cell values (`args`, `capture`, screenshot patterns) are stored as JSON so they stay lossless; the `csv` module quotes/escapes them safely.
 - `wait_ms` / `poll_*_ms` are raw integer milliseconds.
+- Keep waits minimal: prefer polling assertions (`expected_contains` + `poll_total_ms`/`poll_interval_ms`, or `wait_for`) over long fixed `wait_ms`, and when a fixed wait is needed use the smallest reliable value plus a small safety margin rather than padding.

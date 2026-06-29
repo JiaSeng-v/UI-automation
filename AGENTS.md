@@ -31,6 +31,7 @@ This file follows the [agents.md](https://agents.md/) convention and is loaded a
 8. For file assertions use `assert_file` (supports `--negate`, `--contains`, `--delete`).
 9. Do **not** invent new step types. If something doesn't fit, ask before extending the schema.
 10. When emitting a new test case, output ONE complete CSV in a single fenced block; no surrounding prose unless the user asks for an explanation.
+11. **Minimize waits.** Keep test runs fast: prefer polling assertions (`expected_contains` with `poll_total_ms`/`poll_interval_ms`, or `wait_for`) over long fixed `wait_ms` whenever there's an observable state to wait on. When a fixed `wait_ms` is unavoidable, use the smallest value that reliably works plus a small safety margin — don't pad delays "to be safe". This is guidance only: don't randomize values and keep them identical every run.
 
 ## Iterating on failures
 
