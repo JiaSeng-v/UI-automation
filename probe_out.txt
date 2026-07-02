@@ -1,0 +1,4 @@
+found compartment: True
+ 0s: 'Ready'
+15s: ''
+16s: 'Ready'
