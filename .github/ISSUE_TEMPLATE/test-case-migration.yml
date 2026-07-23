@@ -1,22 +1,10 @@
-name: Test case / migration
-description: Request a new UI-automation test case or track a migration task
+name: Test case
+description: Request a new test case
 title: "[Test case] <short description>"
 labels:
   - test case
   - migration
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Use this template to request a new UI-automation test case or track a migration task. This issue is pre-labelled with **test case** and **migration**.
-  - type: textarea
-    id: summary
-    attributes:
-      label: Summary
-      description: What scenario should this test case cover, or what needs to be migrated?
-      placeholder: Briefly describe the app under test and the goal of the scenario.
-    validations:
-      required: true
   - type: textarea
     id: steps
     attributes:
@@ -35,14 +23,6 @@ body:
       description: What should the test verify (console output, files, screenshots)?
     validations:
       required: true
-  - type: input
-    id: target-file
-    attributes:
-      label: Target CSV file
-      description: Proposed path under test_cases/ for the new spec.
-      placeholder: test_cases/my_scenario.csv
-    validations:
-      required: false
   - type: textarea
     id: notes
     attributes:
