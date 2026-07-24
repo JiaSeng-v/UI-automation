@@ -1,0 +1,116 @@
+name: Run UI Tests
+
+# How testers use this workflow:
+#   1. Actions tab → "Run UI Tests" → "Run workflow"
+#   2. Enter the CSV spec path (e.g. test_cases/powershell_echo_loop.csv)
+#   3. Pick your DevBox label (whichever you registered via setup-runner.ps1)
+#   4. Click "Run workflow" — watch live logs in the browser
+#
+# Multiple specs: pass a comma-separated list, e.g.
+#   test_cases/console_app.csv, test_cases/dotnet_sdk_version.csv
+# They run sequentially on the chosen DevBox.
+#
+# To register your DevBox as a self-hosted runner, see docs/REMOTE_RUNNING.md.
+#
+# DevBox label naming convention (used in the `target_devbox` choices below):
+#   <INITIALS>-<DDMMYYYY>-<N>   e.g. ZY-24072026-1
+#     INITIALS = tester initials
+#     DDMMYYYY = date DevBox was provisioned
+#     N        = incrementing number if the same tester owns multiple DevBoxes
+#
+# TO REGISTER A NEW DEVBOX: register your runner with the new label via
+# scripts/setup-runner.ps1, then add the label to `target_devbox.options`
+# below and open a PR. Do NOT reuse an existing label.
+
+on:
+  workflow_dispatch:
+    inputs:
+      csv_spec:
+        description: 'CSV spec path (comma-separated for multiple)'
+        required: true
+        default: 'test_cases/powershell_echo_loop.csv'
+      target_devbox:
+        description: 'Which DevBox label to run on'
+        required: true
+        default: 'ZY-24072026-1'
+        type: choice
+        options:
+          # --- Add your DevBox here after running scripts/setup-runner.ps1 ---
+          - ZY-24072026-1   # Zun Yang
+          - WN-24072026-1   # William Ng
+          - YH-24072026-1   # Ying Heng
+          - HS-24072026-1   # Hui Shan
+      quiet:
+        description: 'Run with -q (quiet: suppress per-step echo)'
+        required: false
+        default: true
+        type: boolean
+
+  # To enable nightly runs, uncomment:
+  # schedule:
+  #   - cron: '0 18 * * *'   # 02:00 UTC+8 (Malaysia)
+
+concurrency:
+  # Don't run two workflows against the same DevBox at once — VS/pwsh
+  # automation requires exclusive UI focus.
+  group: ui-tests-${{ inputs.target_devbox }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: [self-hosted, "${{ inputs.target_devbox }}"]
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show environment
+        shell: powershell
+        run: |
+          Write-Host "Runner:  $env:RUNNER_NAME"
+          Write-Host "Label:   ${{ inputs.target_devbox }}"
+          Write-Host "Specs:   ${{ inputs.csv_spec }}"
+          Write-Host "Quiet:   ${{ inputs.quiet }}"
+          uv --version
+          python --version
+
+      - name: Pre-run cleanup
+        shell: powershell
+        run: .\scripts\finalize-run.ps1
+
+      - name: Sync dependencies
+        shell: powershell
+        run: uv sync --frozen
+
+      - name: Run test spec(s)
+        shell: powershell
+        env:
+          CSV_SPECS: ${{ inputs.csv_spec }}
+          QUIET: ${{ inputs.quiet }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $specs = $env:CSV_SPECS -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+          $quietArg = if ($env:QUIET -eq 'true') { @('-q') } else { @() }
+          $overall = 0
+          foreach ($spec in $specs) {
+            Write-Host "`n===== Running: $spec =====" -ForegroundColor Cyan
+            .\run.ps1 $spec @quietArg
+            $rc = $LASTEXITCODE
+            Write-Host "----- Exit: $rc -----" -ForegroundColor $(if ($rc -eq 0) { 'Green' } else { 'Red' })
+            if ($rc -ne 0 -and $overall -eq 0) { $overall = $rc }
+          }
+          exit $overall
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ inputs.target_devbox }}-${{ github.run_number }}
+          path: screenshots/**/*
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Post-run cleanup
+        if: always()
+        shell: powershell
+        run: .\scripts\finalize-run.ps1
