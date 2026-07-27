@@ -4,6 +4,7 @@ title: "[Test case] <short description>"
 labels:
   - test case
   - migration
+  - pending
 projects:
   - william051200/4
 body:
