@@ -4,6 +4,8 @@ title: "[Test case] <short description>"
 labels:
   - test case
   - migration
+projects:
+  - william051200/4
 body:
   - type: textarea
     id: description
