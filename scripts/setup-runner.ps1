@@ -30,8 +30,10 @@
     e.g. "Zun Yang"
 
 .PARAMETER Repo
-    The GitHub repo to register against. Default: william051200/UI-automation
-    Change to the upstream slug once we move there.
+    The GitHub repo to register the runner against. In the fork-based
+    model each tester runs this against their own fork
+    (e.g. yourhandle/UI-automation). If omitted, the script auto-detects
+    from `git remote get-url origin` on -RepoPath.
 
 .PARAMETER Token
     Registration token from GitHub. If omitted, you'll be prompted with
@@ -71,7 +73,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$TesterName,
 
-    [string]$Repo = 'william051200/UI-automation',
+    [string]$Repo,
 
     [string]$Token,
 
@@ -97,6 +99,33 @@ $isAdmin = ([Security.Principal.WindowsPrincipal] `
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
     throw "This script must be run in an Administrator PowerShell."
+}
+
+# --- Resolve target repo (auto-detect from local clone if not given) -----
+if (-not $Repo) {
+    if (-not (Test-Path $RepoPath)) {
+        throw "-Repo was not passed and -RepoPath '$RepoPath' does not exist. Clone your fork first, or pass -Repo <owner/name>."
+    }
+    Push-Location $RepoPath
+    try {
+        $originUrl = (git remote get-url origin 2>$null).Trim()
+    } finally {
+        Pop-Location
+    }
+    if (-not $originUrl) {
+        throw "Could not read 'origin' remote in $RepoPath. Pass -Repo <owner/name> explicitly."
+    }
+    # Match https://github.com/<owner>/<repo>(.git)? or git@github.com:<owner>/<repo>(.git)?
+    if ($originUrl -match 'github\.com[:/](?<owner>[^/]+)/(?<repo>[^/.]+)') {
+        $Repo = "$($Matches.owner)/$($Matches.repo)"
+    } else {
+        throw "Could not parse GitHub owner/repo from origin URL '$originUrl'. Pass -Repo <owner/name> explicitly."
+    }
+    Write-Ok "Detected repo from origin: $Repo"
+    if ($Repo -match '^william051200/') {
+        Write-Warn "Origin points at the UPSTREAM repo. In the fork-based model you should register runners on YOUR fork, not upstream."
+        Write-Warn "If this is intentional (e.g. you have admin on upstream), continue. Otherwise Ctrl+C, fork the repo, re-clone, and re-run."
+    }
 }
 
 # --- Prereqs: uv, git, python --------------------------------------------

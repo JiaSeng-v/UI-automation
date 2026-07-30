@@ -1,16 +1,18 @@
 name: Run UI Tests
 
-# How testers use this workflow:
-#   1. Actions tab → "Run UI Tests" → "Run workflow"
-#   2. Enter the CSV spec path (e.g. test_cases/powershell_echo_loop.csv)
-#   3. Pick your DevBox label (whichever you registered via setup-runner.ps1)
-#   4. Click "Run workflow" — watch live logs in the browser
+# How testers use this workflow (fork-based model):
+#   0. Fork william051200/UI-automation to your own account.
+#   1. Register your DevBox as a runner on YOUR FORK via
+#      scripts/setup-runner.ps1 (see docs/REMOTE_RUNNING.md).
+#   2. Open YOUR FORK's Actions tab → "Run UI Tests" → "Run workflow"
+#   3. Pick a CSV spec + your DevBox label + quiet flag → Run.
 #
-# Multiple specs: pass a comma-separated list, e.g.
-#   test_cases/console_app.csv, test_cases/dotnet_sdk_version.csv
-# They run sequentially on the chosen DevBox.
+# The `target_devbox` dropdown lists all known team labels for convenience,
+# but only labels registered on YOUR fork will actually accept the job —
+# picking someone else's label from your fork will queue forever.
 #
-# To register your DevBox as a self-hosted runner, see docs/REMOTE_RUNNING.md.
+# Multiple specs: pick "ALL" from the csv_spec dropdown to run every CSV
+# in test_cases/ sequentially on the chosen DevBox.
 #
 # DevBox label naming convention (used in the `target_devbox` choices below):
 #   <INITIALS>-<DDMMYYYY>-<N>   e.g. ZY-24072026-1
@@ -18,9 +20,10 @@ name: Run UI Tests
 #     DDMMYYYY = date DevBox was provisioned
 #     N        = incrementing number if the same tester owns multiple DevBoxes
 #
-# TO REGISTER A NEW DEVBOX: register your runner with the new label via
-# scripts/setup-runner.ps1, then add the label to `target_devbox.options`
-# below and open a PR. Do NOT reuse an existing label.
+# TO REGISTER A NEW DEVBOX: run scripts/setup-runner.ps1 on the DevBox —
+# it will add the label to `target_devbox.options` on your fork
+# automatically. Merging to upstream is optional but nice so other testers
+# see the label in the seeded list when they fork.
 
 on:
   workflow_dispatch:

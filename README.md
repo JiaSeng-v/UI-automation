@@ -62,17 +62,28 @@ uv run python -m unittest discover -s tests -v
 ## Run remotely on a DevBox (self-hosted runner)
 
 Testers can trigger tests on any registered DevBox from the browser — no RDP
-needed for the run itself.
+needed for the run itself. **Every tester works on their own fork** and
+registers runners against it.
 
-**One-time DevBox setup** (RDP in, admin PowerShell):
+**One-time laptop setup:** fork <https://github.com/william051200/UI-automation>,
+then enable Actions: your fork → Settings → Actions → General → "Allow all
+actions" → Save.
+
+**One-time DevBox setup** (RDP in, admin PowerShell — replace `<your-handle>`):
 
 ```powershell
-irm https://raw.githubusercontent.com/william051200/UI-automation/main/install.ps1 | iex
+cd $HOME
+git clone https://github.com/<your-handle>/UI-automation.git
 cd $HOME\UI-automation
-.\scripts\setup-runner.ps1 -Label ZY-24072026-1 -TesterName "Zun Yang" -OpenPR   # <INITIALS>-<DDMMYYYY>-<N>
+irm https://astral.sh/uv/install.ps1 | iex
+$env:Path = "$HOME\.local\bin;$env:Path"
+uv sync
+.\scripts\setup-runner.ps1 -Label ZY-30072026-1 -TesterName "Zun Yang" -OpenPR   # <INITIALS>-<DDMMYYYY>-<N>
 ```
 
-**Day-to-day (browser only):** [Actions → Run UI Tests → Run workflow](https://github.com/william051200/UI-automation/actions/workflows/run-ui-tests.yml) → pick a CSV + your DevBox label.
+**Day-to-day (browser only):** Open your fork's Actions tab
+(`https://github.com/<your-handle>/UI-automation/actions/workflows/run-ui-tests.yml`) →
+**Run workflow** → pick a CSV + your DevBox label.
 
 Full guide, including the label convention, per-run cleanup behaviour, and
 troubleshooting: [`docs/REMOTE_RUNNING.md`](docs/REMOTE_RUNNING.md).
