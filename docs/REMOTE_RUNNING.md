@@ -43,17 +43,40 @@ browser-driven from your laptop.
 
 ### Step 2 — 🖥️ DEVBOX: Install the toolchain and clone the repo
 
-The upstream `install.ps1` handles uv + git + repo clone in one shot:
+The `install.ps1` script handles uv + git + repo clone in one shot:
 
 ```powershell
 irm https://raw.githubusercontent.com/zunyangc/UI-automation/main/install.ps1 | iex
 ```
 
-That leaves the repo at `$HOME\UI-automation`.
+That leaves the repo at `$HOME\UI-automation`. **You must `cd` into it before
+running the next step** — the setup script lives in the repo:
 
 ```powershell
 cd $HOME\UI-automation
 ```
+
+> ⚠️ **While `add-devbox-runner` has not yet been merged to `main`**, the
+> runner tooling only exists on that branch. After `cd $HOME\UI-automation`,
+> switch to it:
+>
+> ```powershell
+> git fetch origin add-devbox-runner
+> git checkout add-devbox-runner
+> ```
+>
+> Once the branch is merged to `main`, skip these two commands.
+
+> ℹ️ `install.ps1` currently clones from the upstream repo
+> `william051200/UI-automation`. If you need the fork's branches during
+> testing, either run the `git fetch/checkout` above, or clone the fork
+> directly instead of using `install.ps1`:
+>
+> ```powershell
+> git clone -b add-devbox-runner https://github.com/zunyangc/UI-automation.git
+> cd UI-automation
+> uv sync
+> ```
 
 ### Step 3 — 🖥️ DEVBOX: Get a runner registration token from GitHub
 
