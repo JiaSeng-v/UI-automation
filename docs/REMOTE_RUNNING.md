@@ -46,7 +46,7 @@ browser-driven from your laptop.
 The `install.ps1` script handles uv + git + repo clone in one shot:
 
 ```powershell
-irm https://raw.githubusercontent.com/zunyangc/UI-automation/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/william051200/UI-automation/main/install.ps1 | iex
 ```
 
 That leaves the repo at `$HOME\UI-automation`. **You must `cd` into it before
@@ -56,37 +56,13 @@ running the next step** — the setup script lives in the repo:
 cd $HOME\UI-automation
 ```
 
-> ⚠️ **While `add-devbox-runner` has not yet been merged to `main`**, the
-> runner tooling only exists on that branch. After `cd $HOME\UI-automation`,
-> switch to it:
->
-> ```powershell
-> git fetch origin add-devbox-runner
-> git checkout add-devbox-runner
-> ```
->
-> Once the branch is merged to `main`, skip these two commands.
-
-> ℹ️ `install.ps1` currently clones from the upstream repo
-> `william051200/UI-automation`. If you need the fork's branches during
-> testing, either run the `git fetch/checkout` above, or clone the fork
-> directly instead of using `install.ps1`:
->
-> ```powershell
-> git clone -b add-devbox-runner https://github.com/zunyangc/UI-automation.git
-> cd UI-automation
-> uv sync
-> ```
-
 ### Step 3 — 🖥️ DEVBOX: Get a runner registration token from GitHub
 
 In your **laptop** browser, open:
 
 ```
-https://github.com/zunyangc/UI-automation/settings/actions/runners/new?arch=x64&os=win
+https://github.com/william051200/UI-automation/settings/actions/runners/new?arch=x64&os=win
 ```
-
-(Post-production, replace `zunyangc` with the upstream org/user slug.)
 
 Copy the token value that appears next to `./config.cmd --token ...`. Tokens
 expire in one hour — grab it right before the next step.
@@ -125,7 +101,7 @@ Paste the token when prompted. The script will:
    Otherwise, print the exact `git`/`gh` commands to run yourself.
 
 When it finishes, verify at
-<https://github.com/zunyangc/UI-automation/settings/actions/runners> that
+<https://github.com/william051200/UI-automation/settings/actions/runners> that
 your runner shows status **Idle**, and merge the PR so your label appears
 in the workflow dropdown for everyone.
 
@@ -152,7 +128,7 @@ Anyone with `Actions: write` on the repo can trigger any registered DevBox.
 
 ### Step 1 — 💻 LAPTOP: Open the workflow page
 
-<https://github.com/zunyangc/UI-automation/actions/workflows/run-ui-tests.yml>
+<https://github.com/william051200/UI-automation/actions/workflows/run-ui-tests.yml>
 
 Click **Run workflow** (top-right).
 

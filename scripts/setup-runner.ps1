@@ -30,7 +30,7 @@
     e.g. "Zun Yang"
 
 .PARAMETER Repo
-    The GitHub repo to register against. Default: zunyangc/UI-automation
+    The GitHub repo to register against. Default: william051200/UI-automation
     Change to the upstream slug once we move there.
 
 .PARAMETER Token
@@ -71,7 +71,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$TesterName,
 
-    [string]$Repo = 'zunyangc/UI-automation',
+    [string]$Repo = 'william051200/UI-automation',
 
     [string]$Token,
 

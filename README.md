@@ -67,12 +67,12 @@ needed for the run itself.
 **One-time DevBox setup** (RDP in, admin PowerShell):
 
 ```powershell
-irm https://raw.githubusercontent.com/zunyangc/UI-automation/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/william051200/UI-automation/main/install.ps1 | iex
 cd $HOME\UI-automation
 .\scripts\setup-runner.ps1 -Label ZY-24072026-1 -TesterName "Zun Yang" -OpenPR   # <INITIALS>-<DDMMYYYY>-<N>
 ```
 
-**Day-to-day (browser only):** [Actions → Run UI Tests → Run workflow](https://github.com/zunyangc/UI-automation/actions/workflows/run-ui-tests.yml) → pick a CSV + your DevBox label.
+**Day-to-day (browser only):** [Actions → Run UI Tests → Run workflow](https://github.com/william051200/UI-automation/actions/workflows/run-ui-tests.yml) → pick a CSV + your DevBox label.
 
 Full guide, including the label convention, per-run cleanup behaviour, and
 troubleshooting: [`docs/REMOTE_RUNNING.md`](docs/REMOTE_RUNNING.md).
