@@ -83,7 +83,11 @@ Pick your label using the convention:
 Then run (in the same admin PowerShell):
 
 ```powershell
-.\scripts\setup-runner.ps1 -Label ZY-24072026-1
+# Edit locally; print the git commands to publish it yourself
+.\scripts\setup-runner.ps1 -Label ZY-24072026-1 -TesterName "Zun Yang"
+
+# Or: let the script push and open the PR for you (needs `gh auth login`)
+.\scripts\setup-runner.ps1 -Label ZY-24072026-1 -TesterName "Zun Yang" -OpenPR
 ```
 
 Paste the token when prompted. The script will:
@@ -92,28 +96,17 @@ Paste the token when prompted. The script will:
 2. Download the latest GitHub Actions runner.
 3. Register it against the repo with your label.
 4. Install it as a **Windows service** so it survives reboots.
+5. **Add your label to `.github/workflows/run-ui-tests.yml`** under
+   `target_devbox.options` (with your name as a YAML comment).
+6. If `-OpenPR` was passed, commit + push + open the PR via `gh`.
+   Otherwise, print the exact `git`/`gh` commands to run yourself.
 
 When it finishes, verify at
 <https://github.com/zunyangc/UI-automation/settings/actions/runners> that
-your runner shows status **Idle**.
+your runner shows status **Idle**, and merge the PR so your label appears
+in the workflow dropdown for everyone.
 
-### Step 5 — 🖥️/💻 Add your label to the workflow
-
-Open `.github/workflows/run-ui-tests.yml`, locate the `target_devbox.options`
-block, and add your label:
-
-```yaml
-          - ZY-24072026-1   # Zun Yang
-          - WN-24072026-1   # William Ng
-          - YH-24072026-1   # Ying Heng
-          - HS-24072026-1   # Hui Shan
-          - XX-DDMMYYYY-N   # <-- your entry (initials + date + number)
-```
-
-Open a PR to add it. After merge, your label appears in the Actions dropdown
-for all testers.
-
-### Step 6 — 🖥️ DEVBOX: Log in and leave unlocked
+### Step 5 — 🖥️ DEVBOX: Log in and leave unlocked
 
 UI automation needs an interactive, unlocked desktop.
 

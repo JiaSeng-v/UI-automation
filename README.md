@@ -69,7 +69,7 @@ needed for the run itself.
 ```powershell
 irm https://raw.githubusercontent.com/zunyangc/UI-automation/main/install.ps1 | iex
 cd $HOME\UI-automation
-.\scripts\setup-runner.ps1 -Label ZY-24072026-1   # <INITIALS>-<DDMMYYYY>-<N>
+.\scripts\setup-runner.ps1 -Label ZY-24072026-1 -TesterName "Zun Yang" -OpenPR   # <INITIALS>-<DDMMYYYY>-<N>
 ```
 
 **Day-to-day (browser only):** [Actions → Run UI Tests → Run workflow](https://github.com/zunyangc/UI-automation/actions/workflows/run-ui-tests.yml) → pick a CSV + your DevBox label.
