@@ -26,22 +26,31 @@ on:
   workflow_dispatch:
     inputs:
       csv_spec:
-        description: 'CSV spec path (comma-separated for multiple)'
+        description: "Which test case to run"
         required: true
-        default: 'test_cases/powershell_echo_loop.csv'
+        default: "test_cases/powershell_echo_loop.csv"
+        type: choice
+        options:
+          # --- Update here: keep in sync with test_cases/*.csv ---
+          - ALL
+          - test_cases/console_app.csv
+          - test_cases/dotnet_sdk_version.csv
+          - test_cases/powershell_echo_loop.csv
+          - test_cases/testcase1_console_nu1605.csv
+          - test_cases/vs_nuget.csv
       target_devbox:
-        description: 'Which DevBox label to run on'
+        description: "Which DevBox label to run on"
         required: true
-        default: 'ZY-24072026-1'
+        default: "ZY-24072026-1"
         type: choice
         options:
           # --- Add your DevBox here after running scripts/setup-runner.ps1 ---
-          - ZY-24072026-1   # Zun Yang
-          - WN-24072026-1   # William Ng
-          - YH-24072026-1   # Ying Heng
-          - HS-24072026-1   # Hui Shan
+          - ZY-24072026-1 # Zun Yang
+          - WN-24072026-1 # William Ng
+          - YH-24072026-1 # Ying Heng
+          - HS-24072026-1 # Hui Shan
       quiet:
-        description: 'Run with -q (quiet: suppress per-step echo)'
+        description: "Run with -q (quiet: suppress per-step echo)"
         required: false
         default: true
         type: boolean
@@ -89,7 +98,17 @@ jobs:
           QUIET: ${{ inputs.quiet }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $specs = $env:CSV_SPECS -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+          if ($env:CSV_SPECS -eq 'ALL') {
+            # Expand ALL to every CSV in test_cases/, excluding the template.
+            $specs = Get-ChildItem -Path 'test_cases' -Filter '*.csv' -File |
+                     Where-Object { $_.Name -ne '_template.csv' } |
+                     ForEach-Object { "test_cases/$($_.Name)" } |
+                     Sort-Object
+            Write-Host "ALL selected -> expanded to $($specs.Count) spec(s):"
+            $specs | ForEach-Object { Write-Host "  $_" }
+          } else {
+            $specs = @($env:CSV_SPECS.Trim())
+          }
           $quietArg = if ($env:QUIET -eq 'true') { @('-q') } else { @() }
           $overall = 0
           foreach ($spec in $specs) {
