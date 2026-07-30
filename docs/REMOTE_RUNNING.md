@@ -137,7 +137,7 @@ Click **Run workflow** (top-right).
 
 | Input | Meaning | Example |
 |---|---|---|
-| `csv_spec` | CSV path (comma-separated for multiple) | `test_cases/powershell_echo_loop.csv` |
+| `csv_spec` | Pick one CSV, or `ALL` to run every case sequentially | `test_cases/powershell_echo_loop.csv` |
 | `target_devbox` | Which DevBox label to run on | `ZY-24072026-1` |
 | `quiet` | Pass `-q` to `run.ps1` | `true` (recommended) |
 
@@ -157,16 +157,15 @@ Click **Run workflow**.
 
 Each workflow run performs these steps on the DevBox:
 
-1. **Pre-run cleanup** — kills leftover UI processes (devenv, cmd, notepad,
-   MSBuild workers) and clears stale project folders in `$HOME`
-   (`ConsoleApp*`, `WindowsApp1*`, `MyGlobal`, `test`, `dn_info.txt`, etc).
-2. **`uv sync --frozen`** — reproducible dep install from `uv.lock`.
-3. **`run.ps1 <spec> [-q]`** — for each spec, sequentially.
-4. **Screenshot upload** — always, even on failure.
-5. **Post-run cleanup** — same as (1). Guarantees the DevBox is clean for
-   whoever runs next.
+1. **`uv sync --frozen`** — reproducible dep install from `uv.lock`.
+2. **`run.ps1 <spec> [-q]`** — for each spec, sequentially.
+3. **Screenshot upload** — always, even on failure.
 
-See `scripts/finalize-run.ps1` for the exact cleanup logic.
+> **DevBox hygiene:** testers refresh their DevBox between runs, so the
+> workflow does **not** perform pre/post cleanup today. A cleanup script
+> (`scripts/finalize-run.ps1`) is checked in and the workflow has commented
+> pre/post steps ready to enable if we ever move to shared or long-lived
+> DevBoxes.
 
 ---
 
