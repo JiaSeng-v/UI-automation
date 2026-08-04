@@ -59,6 +59,35 @@ uv run python -m unittest discover -s tests -v
 
 37 stdlib `unittest` cases covering the helper scripts and the CSV loader — no extra dev dependencies required.
 
+## Run remotely on a DevBox (self-hosted runner)
+
+Testers can trigger tests on any registered DevBox from the browser — no RDP
+needed for the run itself. **Every tester works on their own fork** and
+registers runners against it.
+
+**One-time laptop setup:** fork <https://github.com/william051200/UI-automation>,
+then enable Actions: your fork → Settings → Actions → General → "Allow all
+actions" → Save.
+
+**One-time DevBox setup** (RDP in, admin PowerShell — replace `<your-handle>`):
+
+```powershell
+cd $HOME
+git clone https://github.com/<your-handle>/UI-automation.git
+cd $HOME\UI-automation
+irm https://astral.sh/uv/install.ps1 | iex
+$env:Path = "$HOME\.local\bin;$env:Path"
+uv sync
+.\scripts\setup-runner.ps1 -Label ZY-30072026-1 -TesterName "Zun Yang" -OpenPR   # <INITIALS>-<DDMMYYYY>-<N>
+```
+
+**Day-to-day (browser only):** Open your fork's Actions tab
+(`https://github.com/<your-handle>/UI-automation/actions/workflows/run-ui-tests.yml`) →
+**Run workflow** → pick a CSV + your DevBox label.
+
+Full guide, including the label convention, per-run cleanup behaviour, and
+troubleshooting: [`docs/REMOTE_RUNNING.md`](docs/REMOTE_RUNNING.md).
+
 ## Using with Copilot CLI
 
 If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any other agent that reads `AGENTS.md`) installed, you can drive the toolkit conversationally. The repo's [`AGENTS.md`](AGENTS.md) is auto-loaded and contains the rules the agent must follow when authoring or editing test cases. For the human-facing workflow and example prompts, see [`docs/authoring-scenarios.md`](docs/authoring-scenarios.md).
@@ -93,6 +122,7 @@ Driving the runner through Copilot CLI is convenient but costs LLM tokens per tu
 - [File structure](docs/file-structure.md) — what each file and folder in the repo is for.
 - [CSV test-case format](docs/csv-test-format.md) — author/run test cases as `.csv`; spec layout, step types, placeholders, capture syntax. The `csv-test-formatter` skill tidies rough CSV into the standard layout.
 - [Authoring scenarios with AI](docs/authoring-scenarios.md) — describe plain steps to an agent and get a runnable CSV.
+- [Remote DevBox execution](docs/REMOTE_RUNNING.md) — register a DevBox as a self-hosted runner; trigger runs from the browser.
 - [`AGENTS.md`](AGENTS.md) — auto-loaded instructions for AI coding agents working in this repo.
 - [Reproducibility](docs/reproducibility.md) — how runs stay bit-identical.
 - [Troubleshooting](docs/troubleshooting.md) — DPI, multi-monitor, UI language, legacy pip path.

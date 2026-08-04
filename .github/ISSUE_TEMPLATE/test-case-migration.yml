@@ -1,0 +1,25 @@
+name: Test case
+description: Request a new test case
+title: "[Test case] <short description>"
+labels:
+  - test case
+  - migration
+  - pending
+projects:
+  - william051200/4
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What scenario should this test case cover?
+      placeholder: Briefly describe the app under test and the goal of the scenario.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Environment details, blockers, related issues, or reproducibility notes.
+    validations:
+      required: false
