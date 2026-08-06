@@ -92,6 +92,65 @@ troubleshooting: [`docs/REMOTE_RUNNING.md`](docs/REMOTE_RUNNING.md).
 
 If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any other agent that reads `AGENTS.md`) installed, you can drive the toolkit conversationally. The repo's [`AGENTS.md`](AGENTS.md) is auto-loaded and contains the rules the agent must follow when authoring or editing test cases. For the human-facing workflow and example prompts, see [`docs/authoring-scenarios.md`](docs/authoring-scenarios.md).
 
+### Standard Copilot prompts
+
+Replace the placeholder paths before submitting a prompt.
+
+#### 1. Convert a rough test case
+
+- `<SOURCE_FILE>`: rough CSV to convert
+- `<OUTPUT_FILE>`: standard CSV to create
+- Skill: `csv-test-formatter`
+- Rules: `AGENTS.md` → `docs/csv-test-format.md` → `scripts/csvfmt/csv_schema.py` → `test_cases/_template.csv`
+
+```text
+Use the csv-test-formatter skill.
+
+Source file: <SOURCE_FILE>
+Output file: <OUTPUT_FILE>
+
+Requirements:
+1. Follow AGENTS.md, docs/csv-test-format.md, scripts/csvfmt/csv_schema.py, and test_cases/_template.csv in that precedence order.
+2. Preserve the tester's intent.
+3. Use only existing scripts and schema fields.
+4. Keep values deterministic and paths machine-portable.
+5. Populate sequential step numbers.
+6. Validate the output with scripts/csvfmt/csv_loader.py.
+```
+
+**Example**
+
+- `<SOURCE_FILE>` = `test_cases\drafts\notepad.csv`
+- `<OUTPUT_FILE>` = `test_cases\notepad.csv`
+
+#### 2. Run and automatically repair a test case
+
+- `<TEST_CASE_FILE>`: standard CSV to run and repair
+- `<REPORT_FILE>`: HTML repair report to create
+- Skill: `test-case-repair`
+- Command: `.\run.ps1 <TEST_CASE_FILE> -q`
+
+```text
+Use the test-case-repair skill.
+
+Test case file: <TEST_CASE_FILE>
+Report file: <REPORT_FILE>
+Run command: .\run.ps1 <TEST_CASE_FILE> -q
+
+Requirements:
+1. Follow AGENTS.md and the CSV schema rules.
+2. Diagnose each failed step.
+3. Apply the smallest safe deterministic repair.
+4. Validate the CSV after each repair.
+5. Rerun until the test passes or is blocked.
+6. Generate the report in the same format as test_cases\console_app_repair_report.html.
+```
+
+**Example**
+
+- `<TEST_CASE_FILE>` = `test_cases\notepad.csv`
+- `<REPORT_FILE>` = `test_cases\notepad_repair_report.html`
+
 ### Install the Copilot CLI
 
 Don't have it yet? Run the bundled installer. It sets up **both** the standalone agentic `copilot` CLI and the `gh copilot` extension (whichever is missing), then walks you through login:

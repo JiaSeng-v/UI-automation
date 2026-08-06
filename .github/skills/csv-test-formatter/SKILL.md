@@ -37,7 +37,7 @@ description,,"<one-line description>"
 artifacts,screenshot_dir,screenshots/{timestamp}
 
 # STEPS
-No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,Expected
+No,step no,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,max_iter,Expected
 ```
 
 ### `# STEPS` columns (exact order, from csv_schema.py)
@@ -56,6 +56,7 @@ No,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,p
 | `expected_contains` | Presence makes the step an `assert_console_contains`. |
 | `poll_total_ms` / `poll_interval_ms` | Literal milliseconds for the assert's polling. |
 | `screenshot_pass` / `screenshot_fail` | JSON list of filename patterns; presence makes the step a `screenshot`. |
+| `max_iter` | Maximum number of iterations for a `# LOOP` block. Ignored for normal steps. Prevents infinite loops when a loop condition never clears. |
 | `Expected` | Expected-result note (readability only). |
 
 There are **no `id`, `type`, or `args_mode` columns** — the loader auto-generates the id (`step_1`, …) and infers the type (`screenshot_pass` set → `screenshot`; `expected_contains` set → `assert_console_contains`; otherwise the script basename).
@@ -80,3 +81,95 @@ There are **no `id`, `type`, or `args_mode` columns** — the loader auto-genera
 2. Read `test_cases/_template.csv` and `scripts/csvfmt/csv_schema.py` for the exact layout.
 3. Produce the standard CSV, writing it to `test_cases/<name>.csv`.
 4. Validate by parsing it: `uv run python scripts\csvfmt\csv_loader.py test_cases\<name>.csv` (prints the parsed spec as JSON; fix any `ERROR:` before finishing).
+
+## UI Automation Guidance
+
+Prefer environment discovery over hardcoded assumptions.
+
+Do not assume:
+- Visual Studio edition
+- exact window title
+- project name
+- framework version
+- machine-specific control identifiers
+
+Use captured values and reusable variables whenever possible.
+
+Before keyboard-based actions:
+- Ctrl+Shift+B
+- Ctrl+F5
+- Ctrl+Alt+L
+- Ctrl+A
+- Ctrl+C
+
+Activate the target application window first.
+
+Preferred pattern:
+
+activate_window.py
+→ keyboard action
+
+#### Window Handle Reliability Rules
+
+Do not assume a window handle captured during application launch remains valid for later steps.
+
+Some applications, especially Visual Studio, may recreate top-level windows during startup, page transitions, project creation, or workspace loading.
+
+Preferred pattern for applications that may recreate windows:
+
+1. Launch application and capture process id when available.
+2. Re-discover the active top-level application window after launch or major UI transition.
+3. Capture the refreshed window handle.
+4. Use the refreshed window handle for maximize, activate, find_control, screenshot, and later keyboard actions.
+
+Avoid this fragile pattern:
+
+launch application
+→ capture hwnd
+→ reuse same hwnd for all later steps
+
+Prefer this stable pattern:
+
+launch application
+→ capture pid or broad window match
+→ re-find active application window
+→ capture refreshed hwnd
+→ use refreshed hwnd for later steps
+
+For Visual Studio scenarios, refresh the Visual Studio window handle after:
+- launching Visual Studio
+- opening Create a new project
+- creating the project
+- loading the generated solution
+- switching to a new document or project window
+
+If a later step fails with "Invalid handle", regenerate or repair the CSV by inserting a window re-discovery step before using that handle again.
+
+### Control Discovery Rules
+
+Avoid inventing control labels, control names, and control types.
+
+Do not assume controls named:
+- Project name
+- Language filter
+- Platform filter
+- Project type
+- Search box
+
+unless those labels have been discovered from UIA output.
+
+When control identity is unknown:
+
+1. Discover the control first.
+2. Capture its selector.
+3. Reuse the selector.
+
+Prefer discovered selectors over guessed labels.
+
+Avoid:
+read_text.py --name "Project name"
+
+Prefer:
+find_control.py
+capture selector
+reuse captured selector

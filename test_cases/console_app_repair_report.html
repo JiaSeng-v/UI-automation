@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Console App UI Automation Repair Report</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; color: #24292f; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #d0d7de; padding: 0.75rem; text-align: left; vertical-align: top; }
+    th { background: #f6f8fa; }
+    .pass { color: #1a7f37; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Console App UI Automation Repair Report</h1>
+  <p><strong>Test case:</strong> <code>test_cases\console_app.csv</code></p>
+  <p><strong>Final result:</strong> <span class="pass">PASS</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Attempt</th>
+        <th>Failed step</th>
+        <th>Failure</th>
+        <th>Fix applied</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><code>step_14</code></td>
+        <td>The Console App template control was not found because pressing Enter had already advanced the wizard to project configuration.</td>
+        <td>Removed the Enter submission. Visual Studio filters templates automatically, leaving the result page available for the template selector.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><code>step_36</code></td>
+        <td>The project Properties framework control returned no text because the project context-menu path did not open the project designer.</td>
+        <td>Replaced it with the live-discovered Project menu and dynamic generated-project Properties item, then waited for the Target framework ComboBox before asserting the captured version.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><code>step_44</code></td>
+        <td>The spawned debug console used <code>ConsoleWindowClass</code> instead of <code>CASCADIA_HOSTING_WINDOW_CLASS</code>.</td>
+        <td>Changed discovery to a non-exact Visual Studio console title regex combined with the observed <code>ConsoleWindowClass</code>, avoiding unrelated terminal windows.</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

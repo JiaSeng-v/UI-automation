@@ -1,5 +1,14 @@
 # CSV test-case format
 
+## Source of Truth
+
+The authoritative CSV contract is defined by:
+
+1. scripts/csvfmt/csv_schema.py
+2. test_cases/_template.csv
+
+If examples, documentation, skills or prompts conflict with the schema, the schema and template take precedence.
+
 Test cases are plain-text **CSV** — the version-control-friendly, **hand-authored source of truth**. `run.ps1` loads a `.csv` spec directly into the runner (in memory) and runs it.
 
 ```powershell
