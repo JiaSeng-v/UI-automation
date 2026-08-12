@@ -1,87 +1,50 @@
-# Copilot Authoring Workflow
+# Copilot authoring workflow
 
-## Purpose
+Testers describe what the UI test should do. Copilot converts that intent into the repository's executable CSV format.
 
-This repository supports a Copilot-assisted UI automation authoring workflow.
+## Standard conversion prompt
 
-Testers describe a UI test scenario in human-readable steps, and Copilot converts that intent into a standard executable CSV test case.
-
-The tester is not expected to understand the internal CSV schema, script paths, JSON arguments, capture syntax, UIA selector strategy, or runner implementation details.
-
-## Core idea
-
-Tester describes intent.
-
-Copilot generates implementation.
-
-The CSV remains the executable source of truth.
-
-## Standard workflow
+Save the raw CSV under `test_cases\drafts\`, then replace `<name>` with the file's base name:
 
 ```text
-Tester input
-  ↓
-Plain English steps / Excel step list / screenshot-based procedure / rough CSV
-  ↓
-Copilot conversion
-  ↓
-Standard repository CSV format
-  ↓
-CSV validation against scripts/csvfmt/csv_schema.py
-  ↓
-Execution through .\run.ps1 <csv-file>
-  ↓
-Human-readable result review
+Use the csv-test-formatter skill.
+Source file: test_cases\drafts\<name>.csv
 ```
 
-## Environment Discovery
+Copilot infers the output as `test_cases\<name>.csv`. To use another destination, add:
 
-Testers provide business intent.
+```text
+Output file: <OUTPUT_FILE>
+```
 
-Copilot should avoid machine-specific assumptions.
+## Convert a rough test case
 
-Do not generate test cases that depend on:
+1. Save the rough CSV as `test_cases\drafts\<name>.csv`.
+2. Ask Copilot to use the `csv-test-formatter` skill and provide the source path.
+3. Copilot automatically writes `test_cases\<name>.csv` using the same base filename. You may provide another output path when needed.
+4. Copilot maps each action to an existing script and writes the canonical CSV.
+5. Copilot runs strict structural validation with:
 
-- Visual Studio Community
-- Visual Studio Enterprise
-- Visual Studio Preview
-- Visual Studio Insider
+```powershell
+uv run python scripts\csvfmt\csv_loader.py test_cases\<name>.csv
+```
 
-unless explicitly requested.
+6. Validation confirms the format, required fields, step numbering, script paths, JSON fields, numeric values, and loops. It does not prove that live UI selectors work.
 
-Prefer discovering:
+## Run the generated test
 
-- target windows
-- controls
-- project names
-- framework values
+```powershell
+.\run.ps1 test_cases\<name>.csv -q
+```
 
-during execution.
+The runner executes each script, substitutes captured variables, polls assertions, and writes requested screenshots.
 
-Captured values should be reused later for validation.
+## Repair a failing test
 
-## Focus Management
+Ask Copilot to use the `test-case-repair` skill. Copilot runs the test, repairs one evidence-backed failure at a time, validates the CSV after each edit, reruns the complete test, and writes an HTML repair report.
 
-UI automation must not assume keyboard focus.
+The repair stops with `BLOCKED` instead of guessing when it needs unavailable software, credentials, permissions, unknown user intent, or a new script or schema capability.
 
-Before keyboard shortcuts:
+## Responsibility
 
-- Ctrl+Shift+B
-- Ctrl+F5
-- Ctrl+Alt+L
-- Ctrl+A
-- Ctrl+C
-
-ensure the target application is active.
-
-Recommended flow:
-
-activate_window.py
-→ keyboard action
-
-This reduces failures caused by:
-
-- Windows IME
-- Language switchers
-- Input Method Editors
-- Focus stealing applications
+`AGENTS.md` contains mandatory authoring rules. `docs/csv-test-format.md` explains CSV syntax. The skills contain the conversion and repair procedures.
