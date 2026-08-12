@@ -36,7 +36,7 @@ your laptop browser. No RDP needed during the run itself.
   contributed back to upstream via pull request.
 
 **How it stays scalable:** each DevBox registers as a distinct runner with
-a unique label (e.g. `ZY-24072026-1`). The workflow's `target_devbox` input
+a unique label (e.g. `12082026-desk-1`). The workflow's `target_devbox` input
 picks which label to run on. Adding a DevBox = one command on that DevBox;
 the setup script also adds the label to your fork's workflow dropdown.
 
@@ -74,90 +74,42 @@ entirely browser-driven from your laptop.
 > cd $HOME
 > ```
 
-### Step 2 — 🖥️ DEVBOX: Clone YOUR fork and install the toolchain
+### Step 2 — 🖥️ DEVBOX: Run the one-line setup
 
-Clone your fork (not upstream — the runner must be registered against the
-repo that owns the clone):
-
-```powershell
-cd $HOME
-git clone https://github.com/<your-handle>/UI-automation.git
-cd $HOME\UI-automation
-```
-
-Then bring in `uv`, Python, and the project dependencies:
+Paste this **single line** (replace `<your-handle>` with your GitHub handle):
 
 ```powershell
-irm https://astral.sh/uv/install.ps1 | iex
-$env:Path = "$HOME\.local\bin;$env:Path"
-uv sync
+irm https://raw.githubusercontent.com/<your-handle>/UI-automation/main/scripts/setup-remote-runner.ps1 | iex
 ```
 
-> If `git` isn't installed on the DevBox, `setup-runner.ps1` will install
-> it via `winget` on first run — you can also skip the manual clone and
-> re-run this section after Step 4 finishes.
+The script will:
 
-### Step 3 — 🖥️ DEVBOX: Get a runner registration token from YOUR fork
+1. Detect (or ask for) your GitHub handle and clone
+   `https://github.com/<your-handle>/UI-automation.git` into `$HOME\UI-automation`.
+2. Install `uv` and run `uv sync` (Python + deps).
+3. Compose your DevBox label as `<DDMMYYYY>[-<suffix>]-<N>`:
+   - today's date is auto-prepended,
+   - it asks for an optional suffix (e.g. `desk`, `laptop`) — leave blank to skip,
+   - `<N>` auto-increments by scanning existing labels on your fork's workflow.
+4. Prompt you for a **runner registration token**. Get it from
+   (open in your **laptop** browser):
 
-In your **laptop** browser, open (replace `<your-handle>`):
+   ```
+   https://github.com/<your-handle>/UI-automation/settings/actions/runners/new?arch=x64&os=win
+   ```
 
-```
-https://github.com/<your-handle>/UI-automation/settings/actions/runners/new?arch=x64&os=win
-```
-
-Copy the token value that appears next to `./config.cmd --token ...`. Tokens
-expire in one hour — grab it right before the next step.
-
-### Step 4 — 🖥️ DEVBOX: Register the runner
-
-Pick your label using the convention:
-
-```
-<INITIALS>-<DDMMYYYY>-<N>
-```
-
-- `<INITIALS>` — your initials (e.g. `ZY`, `WN`, `YH`, `HS`)
-- `<DDMMYYYY>` — the date you're provisioning the DevBox
-- `<N>` — 1 for your first DevBox, 2 for your second, etc.
-
-Then run (in the same admin PowerShell, from `$HOME\UI-automation`):
-
-```powershell
-# Edit locally; print the git commands to publish it yourself
-.\scripts\setup-runner.ps1 -Label ZY-30072026-1 -TesterName "Zun Yang"
-
-# Or: let the script push and open a PR on your fork via `gh`
-.\scripts\setup-runner.ps1 -Label ZY-30072026-1 -TesterName "Zun Yang" -OpenPR
-```
-
-Paste the token when prompted. The script will:
-
-1. Auto-detect your fork slug from `git remote origin` (warns if it
-   accidentally points at upstream — pass `-Repo <your-handle>/UI-automation`
-   to override).
-2. Verify uv / git / python (installing what's missing).
-3. Download the latest GitHub Actions runner.
-4. Register it against **your fork** with your label.
-5. Install it as a **Windows service** so it survives reboots.
-6. **Add your label to `.github/workflows/run-ui-tests.yml`** under
-   `target_devbox.options` (with your name as a YAML comment).
-7. If `-OpenPR` was passed, commit + push + open the PR via `gh` on your
-   fork. Otherwise, print the exact `git`/`gh` commands to run yourself.
-
-> Because it's your own fork, you can also skip the PR and push straight
-> to `main`:
-> ```powershell
-> git add .github/workflows/run-ui-tests.yml
-> git commit -m "Register DevBox runner: ZY-30072026-1"
-> git push origin main
-> ```
+   Copy the token that appears next to `./config.cmd --token ...` and
+   paste it into the PowerShell prompt. Tokens expire in ~1 hour — grab
+   it right before pasting.
+5. Register the runner, install a Scheduled Task so it auto-starts on
+   logon, add your label to `.github/workflows/run-ui-tests.yml`, and
+   push the change to your fork's `main` (no PR — it's your own fork).
 
 When it finishes, verify at
 `https://github.com/<your-handle>/UI-automation/settings/actions/runners`
-that your runner shows status **Idle**, and merge the workflow PR (or
-push directly) so your label appears in the dropdown.
+that your runner shows status **Idle**.
 
-### Step 5 — 🖥️ DEVBOX: Log in and leave unlocked
+### Step 3 — 🖥️ DEVBOX: Log in and leave unlocked
 
 UI automation needs an interactive, unlocked desktop.
 
@@ -192,8 +144,7 @@ Click **Run workflow** (top-right).
 | Input | Meaning | Example |
 |---|---|---|
 | `csv_spec` | Pick one CSV, or `ALL` to run every case sequentially | `test_cases/powershell_echo_loop.csv` |
-| `target_devbox` | Which DevBox label to run on | `ZY-30072026-1` |
-| `quiet` | Pass `-q` to `run.ps1` | `true` (recommended) |
+| `target_devbox` | Which DevBox label to run on | `12082026-1` |
 
 Click **Run workflow**.
 
@@ -204,6 +155,41 @@ Click **Run workflow**.
   the `screenshots-<label>-<n>` artifact contains every screenshot the CSV
   captured.
 - **Exit codes** — `0` = pass, `1` = assertion fail, `2` = runner error.
+
+### Step 4 — 🖥️ DEVBOX: Restart the listener if it dies
+
+Sometimes the `run.cmd` PowerShell window closes (accidental close, reboot,
+error), and jobs then queue forever. Check status here:
+
+```
+https://github.com/<your-handle>/UI-automation/settings/actions/runners
+```
+
+If your runner shows **Offline** (grey dot), restart it — pick either:
+
+**A) One-liner via the Scheduled Task** (the one `setup-remote-runner.ps1`
+registered):
+
+```powershell
+Start-ScheduledTask -TaskName "GHRunner-<Label>"
+```
+
+Replace `<Label>` with your DevBox label (e.g. `GHRunner-12082026-1`).
+
+**B) Manual restart** in the same admin PowerShell:
+
+```powershell
+cd C:\actions-runner
+.\run.cmd
+```
+
+Leave the window open — closing it stops the runner again. Wait until you
+see `Listening for Jobs`, then re-check the Runners page — status should
+flip back to **Idle**.
+
+> After a DevBox reboot the Scheduled Task starts the listener
+> automatically on logon, so this recovery is only needed if you closed
+> the window without a reboot.
 
 ---
 
@@ -243,10 +229,12 @@ Each workflow run performs these steps on the DevBox:
 
 ## Adding another DevBox for yourself
 
-Same steps as Part B, using label `XX-DDMMYYYY-N` where `N` is one higher
-than any DevBox you already own. Each label is unique per DevBox; **never**
-reuse a label across two machines — GitHub will re-register and the previous
-DevBox will silently stop receiving jobs.
+Same one-liner as Part B — `setup-remote-runner.ps1` auto-composes a fresh
+label. `<N>` auto-increments by scanning the existing labels on your
+fork's workflow, so a second DevBox provisioned on the same day + same
+suffix becomes `<DDMMYYYY>[-<suffix>]-2`. Each label is unique per DevBox;
+**never** reuse a label across two machines — GitHub will re-register and
+the previous DevBox will silently stop receiving jobs.
 
 ---
 
@@ -254,29 +242,49 @@ DevBox will silently stop receiving jobs.
 
 | Symptom | Cause / Fix |
 |---|---|
-| Workflow queued forever | No runner is online on **your fork** with the chosen label. RDP the DevBox and check the `actions.runner.*` Windows service is running. |
+| Workflow queued forever | No runner is online on **your fork** with the chosen label. Check `Settings → Actions → Runners` on your fork — if your runner shows **Offline**, restart the listener (see Part C, Step 4). |
 | Dispatched from wrong repo | You must dispatch from `https://github.com/<your-handle>/UI-automation/actions`, not upstream. Upstream has no runners of yours. |
 | `Not Found` on the runner-registration URL | You're looking at upstream. The URL must contain your fork's handle. |
 | `The system cannot find the file specified` at UIA step | The DevBox is locked or logged off. Unlock and re-run. |
 | Screenshots artifact missing | The CSV didn't write any screenshots (some don't) — not an error. |
 | `uv sync` fails with `python not found` | First run on a fresh DevBox — `uv` will fetch Python. Re-trigger the workflow. |
-| Runner appears twice in Settings → Runners | You re-registered without unregistering. From the DevBox: `cd C:\actions-runner; .\config.cmd remove --token <new-token>` then re-run `setup-runner.ps1`. |
+| Runner appears twice in Settings → Runners | You re-registered without unregistering. Run `scripts\remove-runner.ps1 -Label <old-label>` on the DevBox to decommission the stale entry, then re-run `setup-remote-runner.ps1`. |
 | Two workflows fought over the same DevBox | The workflow uses a `concurrency` group per label, so this shouldn't happen. If you see interleaved logs, file a bug. |
 
 ---
 
 ## Uninstalling a runner from a DevBox
 
-RDP in, admin PowerShell, then:
+RDP into the DevBox, open an admin PowerShell. First grab a removal
+token (either via CLI or browser):
 
 ```powershell
-cd C:\actions-runner
-.\svc.cmd stop
-.\svc.cmd uninstall
-# Get a fresh removal token from the same URL as registration
-.\config.cmd remove --token <TOKEN>
+# Option A -- CLI (fastest; needs `gh auth login` once):
+gh api -X POST repos/<your-handle>/UI-automation/actions/runners/remove-token
+
+# Option B -- browser:
+# Fork -> Settings -> Actions -> Runners -> click your runner ->
+# Remove -> copy the token from the shown './config.cmd remove --token ...' line.
 ```
 
-Then remove the label from `target_devbox.options` in your fork's workflow
-and push (fork-internal — no upstream PR needed unless you want to clean
-the seeded list upstream too).
+Then run:
+
+```powershell
+cd $HOME\UI-automation
+.\scripts\remove-runner.ps1 -Label <YourLabel> -Token <RemoveToken>
+```
+
+This will:
+
+1. Stop and unregister the `GHRunner-<Label>` Scheduled Task.
+2. Kill the live listener process.
+3. Run `config.cmd remove --token <Token>` to deregister on GitHub.
+4. Strip the label from `target_devbox.options` in your fork's workflow
+   and push the change to `origin/main`.
+
+If the runner is already gone from Settings -> Runners (or the token
+endpoint 404s), use `-LocalOnly` to skip the GitHub-side deregistration:
+
+```powershell
+.\scripts\remove-runner.ps1 -Label <YourLabel> -LocalOnly
+```
