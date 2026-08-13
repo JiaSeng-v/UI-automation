@@ -1,39 +1,24 @@
-<#
+﻿<#
 .SYNOPSIS
     Register the current DevBox as a self-hosted GitHub Actions runner
-    for the UI-automation repository.
+    for the UI-automation repository (fork-based model).
 
 .DESCRIPTION
     One-time bootstrap. Run this ON YOUR DEVBOX (RDP'd, unlocked) once,
     then never again for that DevBox. After it completes, your DevBox
-    is a runner reachable from the Actions tab, and any tester can
-    trigger a workflow against it from a browser.
+    is a runner reachable from your fork's Actions tab.
 
-    What it does:
-      1. Prompts for (or accepts) your DevBox label.
-      2. Verifies uv, python, git are present (installs via winget if not).
-      3. Downloads the latest actions/runner release.
-      4. Configures it against the repo with your chosen label.
-      5. Installs and starts it as a Windows service that survives reboots.
-
-    You will need a runner registration token from the repo's
-    Settings -> Actions -> Runners -> New self-hosted runner page.
-    (Or pass -Token to skip the interactive prompt.)
+    Normally invoked by scripts/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
 
 .PARAMETER Label
-    The label to register this runner under. Must follow the convention:
-      <INITIALS>-<DDMMYYYY>-<N>
-    e.g. ZY-24072026-1
-
-.PARAMETER TesterName
-    Your name (shown as a YAML comment next to the label in the workflow file).
-    e.g. "Zun Yang"
+    The label to register this runner under. Accepted formats:
+      <DDMMYYYY>-<N>                    e.g. 12082026-1
+      <DDMMYYYY>-<Name>-<N>             e.g. 12082026-desk-1
+      <INITIALS>-<DDMMYYYY>-<N>         (legacy) e.g. ZY-24072026-1
 
 .PARAMETER Repo
-    The GitHub repo to register the runner against. In the fork-based
-    model each tester runs this against their own fork
-    (e.g. yourhandle/UI-automation). If omitted, the script auto-detects
-    from `git remote get-url origin` on -RepoPath.
+    The GitHub repo to register the runner against (must be YOUR fork).
+    If omitted, auto-detected from `git remote get-url origin` on -RepoPath.
 
 .PARAMETER Token
     Registration token from GitHub. If omitted, you'll be prompted with
@@ -43,35 +28,25 @@
     Directory to install the runner into. Default: C:\actions-runner
 
 .PARAMETER RepoPath
-    Local clone of the repo where the workflow file lives. The script
-    edits .github/workflows/run-ui-tests.yml here to add your label.
-    Default: $HOME\UI-automation
-
-.PARAMETER OpenPR
-    If set, the script will push the workflow edit and open a PR via `gh`.
-    Requires `gh auth login` on this DevBox. Without this switch, the
-    script edits the file locally and prints the git commands for you
-    to run manually.
+    Local clone of the repo where the workflow file lives. Default:
+    $HOME\UI-automation
 
 .EXAMPLE
-    .\scripts\setup-runner.ps1 -Label ZY-24072026-1 -TesterName "Zun Yang"
+    .\scripts\setup-runner.ps1 -Label 12082026-1
 
 .EXAMPLE
-    .\scripts\setup-runner.ps1 -Label WN-24072026-1 -TesterName "William Ng" -OpenPR
+    .\scripts\setup-runner.ps1 -Label 12082026-desk-1 -Token ABCDEF...
 
 .NOTES
-    Must be run in an Administrator PowerShell (installing a Windows
-    service requires elevation).
+    Must be run in an Administrator PowerShell (installing a Scheduled
+    Task at logon requires elevation).
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidatePattern('^[A-Z]{2}-\d{8}-\d+$')]
+    [ValidatePattern('^([A-Z]{2}-)?\d{8}(-[A-Za-z0-9]+)*-\d+$')]
     [string]$Label,
-
-    [Parameter(Mandatory = $true)]
-    [string]$TesterName,
 
     [string]$Repo,
 
@@ -79,12 +54,7 @@ param(
 
     [string]$InstallRoot = 'C:\actions-runner',
 
-    # Path to the local clone of the repo (where the workflow file lives).
-    [string]$RepoPath = (Join-Path $HOME 'UI-automation'),
-
-    # If set, the script will push the workflow edit and open a PR via `gh`.
-    # Requires `gh auth login` to be complete on this DevBox.
-    [switch]$OpenPR
+    [string]$RepoPath = (Join-Path $HOME 'UI-automation')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -123,10 +93,13 @@ if (-not $Repo) {
     }
     Write-Ok "Detected repo from origin: $Repo"
     if ($Repo -match '^william051200/') {
-        Write-Warn "Origin points at the UPSTREAM repo. In the fork-based model you should register runners on YOUR fork, not upstream."
-        Write-Warn "If this is intentional (e.g. you have admin on upstream), continue. Otherwise Ctrl+C, fork the repo, re-clone, and re-run."
+        throw "Origin still points at the upstream repo. Fork william051200/UI-automation to your account, re-clone from your fork, and re-run setup-remote-runner.ps1."
     }
 }
+
+# Extract GitHub handle from the resolved repo (owner part) -- used as the
+# commenting/attribution name next to the label in the workflow file.
+$GhHandle = ($Repo -split '/')[0]
 
 # --- Prereqs: uv, git, python --------------------------------------------
 Write-Step "Checking prerequisites (uv, git, python)..."
@@ -155,7 +128,7 @@ Write-Ok "uv: $(uv --version)"
 
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     # uv will fetch python on first `uv sync`; nothing to install here.
-    Write-Warn "python not on PATH — uv will provision one on first sync."
+    Write-Warn "python not on PATH -- uv will provision one on first sync."
 } else {
     Write-Ok "python: $(python --version)"
 }
@@ -193,7 +166,8 @@ if (-not (Test-Path (Join-Path $InstallRoot 'config.cmd'))) {
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $InstallRoot)
 }
 
-# --- Configure -----------------------------------------------------------
+# --- Configure runner (NOT as service: UI automation needs the interactive
+#     desktop, and Windows services run in Session 0 with no UI access) ----
 Write-Step "Configuring runner as '$Label' against $Repo..."
 $runnerUrl = "https://github.com/$Repo"
 & .\config.cmd `
@@ -206,13 +180,38 @@ $runnerUrl = "https://github.com/$Repo"
     --replace
 if ($LASTEXITCODE -ne 0) { throw "config.cmd failed with exit code $LASTEXITCODE" }
 
-# --- Install as Windows service ------------------------------------------
-Write-Step "Installing runner as a Windows service..."
-& .\svc.cmd install
-& .\svc.cmd start
-if ($LASTEXITCODE -ne 0) { throw "svc.cmd start failed with exit code $LASTEXITCODE" }
+Write-Ok "Runner '$Label' registered."
 
-Write-Ok "Runner '$Label' installed and started as a Windows service."
+# --- Launch runner in the interactive session ----------------------------
+# UI automation requires the desktop, so we start run.cmd in a visible
+# PowerShell window that the tester leaves open (screens stay unlocked
+# at all times per team policy).
+Write-Step "Starting runner in a new PowerShell window..."
+$runCmd = Join-Path $InstallRoot 'run.cmd'
+Start-Process -FilePath 'powershell.exe' `
+    -ArgumentList @('-NoExit', '-Command', "Set-Location '$InstallRoot'; & '$runCmd'") `
+    -WorkingDirectory $InstallRoot | Out-Null
+Write-Ok "Runner launched. Leave that PowerShell window open -- closing it stops the runner."
+
+# --- Create a Scheduled Task so the runner auto-starts on user logon -----
+Write-Step "Registering Scheduled Task 'GHRunner-$Label' to auto-start on logon..."
+try {
+    $taskName = "GHRunner-$Label"
+    $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+    if ($existing) { Unregister-ScheduledTask -TaskName $taskName -Confirm:$false }
+    $action = New-ScheduledTaskAction -Execute 'powershell.exe' `
+        -Argument "-NoExit -Command `"Set-Location '$InstallRoot'; & '$runCmd'`""
+    $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+    $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
+    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings | Out-Null
+    Write-Ok "Scheduled Task '$taskName' created. Runner auto-starts on logon."
+} catch {
+    Write-Warn "Could not register Scheduled Task: $_"
+    Write-Warn "Runner will still work now, but you'll need to manually run:"
+    Write-Warn "  cd $InstallRoot; .\run.cmd"
+    Write-Warn "after each reboot/logon."
+}
 
 # --- Update workflow YAML to expose this label in the dropdown ------------
 Write-Step "Adding '$Label' to .github/workflows/run-ui-tests.yml..."
@@ -220,59 +219,60 @@ Write-Step "Adding '$Label' to .github/workflows/run-ui-tests.yml..."
 $workflow = Join-Path $RepoPath '.github/workflows/run-ui-tests.yml'
 if (-not (Test-Path $workflow)) {
     Write-Warn "Workflow file not found at $workflow; skipping YAML edit."
-    Write-Warn "Add '- $Label   # $TesterName' manually under target_devbox.options."
+    Write-Warn "Add '- $Label   # $GhHandle' manually under target_devbox.options."
 } else {
     $content = Get-Content -Path $workflow -Raw
+    $newLine = "          - $Label # $GhHandle"
+
     if ($content -match [regex]::Escape("- $Label")) {
-        Write-Ok "Label '$Label' is already present in the workflow — nothing to do."
+        Write-Ok "Label '$Label' is already present in the workflow -- nothing to do."
+        $skipPush = $true
     } else {
-        # Insert a new entry as the LAST line inside target_devbox.options.
-        # Pattern: find the target_devbox: options: block, then the last
-        # existing '          - XX-...' line before the next input (`quiet:`).
-        $newLine = "          - $Label # $TesterName"
-        $pattern = '(?ms)(target_devbox:.*?options:\s*\n(?:.*?\n)*?)((?:\s{10}- [A-Z]{2}-\d{8}-\d+.*\n)+)'
+        $skipPush = $false
+        # Primary: find target_devbox.options block and append after the last existing bullet line.
+        # Accept both legacy 'XX-DDMMYYYY-N' and new 'DDMMYYYY[-name]-N' entries.
+        $pattern = '(?ms)(target_devbox:.*?options:[ \t]*\r?\n(?:[^\r\n]*\r?\n)*?)((?:[ ]{10}- (?:[A-Z]{2}-)?\d{8}(?:-[A-Za-z0-9]+)*-\d+[^\r\n]*\r?\n)+)'
         $match = [regex]::Match($content, $pattern)
-        if (-not $match.Success) {
-            Write-Warn "Could not locate target_devbox.options block in $workflow."
-            Write-Warn "Add '$newLine' manually under target_devbox.options."
-        } else {
+        $updated = $null
+
+        if ($match.Success) {
             $existingBlock = $match.Groups[2].Value
             $newBlock = $existingBlock.TrimEnd("`n") + "`n$newLine`n"
-            $updated = $content.Substring(0, $match.Groups[2].Index) +
-                       $newBlock +
-                       $content.Substring($match.Groups[2].Index + $match.Groups[2].Length)
-            Set-Content -Path $workflow -Value $updated -NoNewline
-            Write-Ok "Added '$Label # $TesterName' to workflow."
-
-            if ($OpenPR) {
-                Write-Step "Committing, pushing, and opening a PR (via gh)..."
-                Push-Location $RepoPath
-                try {
-                    $branch = "register-$($Label.ToLower())"
-                    git checkout -b $branch 2>&1 | Out-Host
-                    git add .github/workflows/run-ui-tests.yml
-                    git commit -m "Register DevBox runner: $Label ($TesterName)" | Out-Host
-                    git push -u origin $branch | Out-Host
-                    gh pr create --fill --title "Register DevBox runner: $Label" `
-                                 --body "Registers DevBox runner ``$Label`` for $TesterName. Automatically generated by scripts/setup-runner.ps1." | Out-Host
-                    Write-Ok "PR opened. Merge it to expose '$Label' in the workflow dropdown."
-                } catch {
-                    Write-Warn "Auto-PR failed: $_"
-                    Write-Warn "Push manually: git push origin $branch  &&  gh pr create --fill"
-                } finally {
-                    Pop-Location
-                }
-            } else {
-                Write-Host ""
-                Write-Warn "Workflow edited locally. To publish, run:"
-                Write-Host "    cd $RepoPath" -ForegroundColor Yellow
-                Write-Host "    git checkout -b register-$($Label.ToLower())" -ForegroundColor Yellow
-                Write-Host "    git add .github/workflows/run-ui-tests.yml" -ForegroundColor Yellow
-                Write-Host "    git commit -m ""Register DevBox runner: $Label ($TesterName)""" -ForegroundColor Yellow
-                Write-Host "    git push -u origin register-$($Label.ToLower())" -ForegroundColor Yellow
-                Write-Host "    gh pr create --fill" -ForegroundColor Yellow
-                Write-Host "  (or re-run this script with -OpenPR to do all of that automatically)"
+            $updated = $content.Substring(0, $match.Groups[2].Index) + $newBlock + $content.Substring($match.Groups[2].Index + $match.Groups[2].Length)
+        } else {
+            # Fallback: anchor on 'options:' under target_devbox and insert immediately after it,
+            # skipping only leading comment lines. Works even when the options list is empty.
+            $fallback = '(?ms)(target_devbox:.*?options:[ \t]*\r?\n(?:[ ]{10}#[^\r\n]*\r?\n)*)'
+            $m2 = [regex]::Match($content, $fallback)
+            if ($m2.Success) {
+                $insertAt = $m2.Index + $m2.Length
+                $updated = $content.Substring(0, $insertAt) + "$newLine`n" + $content.Substring($insertAt)
             }
+        }
+
+        if ($updated) {
+            Set-Content -Path $workflow -Value $updated -NoNewline
+            Write-Ok "Added '$Label # $GhHandle' to workflow."
+        } else {
+            Write-Warn "Could not locate target_devbox.options block in $workflow."
+            Write-Warn "Add '$newLine' manually under target_devbox.options, then push."
+            $skipPush = $true
+        }
+    }
+
+    if (-not $skipPush) {
+        Write-Step "Committing and pushing to origin/main..."
+        Push-Location $RepoPath
+        try {
+            git add .github/workflows/run-ui-tests.yml
+            git commit -m "Register DevBox runner: $Label" | Out-Host
+            git push origin main | Out-Host
+            Write-Ok "Workflow updated on origin/main. Label '$Label' is now selectable."
+        } catch {
+            Write-Warn "Push failed: $_"
+            Write-Warn "Push manually from $RepoPath : git add -A; git commit -m 'Register $Label'; git push origin main"
+        } finally {
+            Pop-Location
         }
     }
 }
@@ -281,6 +281,5 @@ Write-Host ""
 Write-Host "NEXT STEPS:" -ForegroundColor Yellow
 Write-Host "  1. Verify at: https://github.com/$Repo/settings/actions/runners"
 Write-Host "     Your runner '$Label' should show status = Idle."
-Write-Host "  2. If not yet done, merge the workflow PR to expose your label."
-Write-Host "  3. Trigger a run from the Actions tab: pick a CSV + your label."
+Write-Host "  2. Trigger a run from the Actions tab: pick a CSV + your label."
 Write-Host ""
