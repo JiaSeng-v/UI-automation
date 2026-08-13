@@ -170,12 +170,7 @@ If your runner shows **Offline** (grey dot), restart it — pick either:
 **A) One-liner via the Scheduled Task** (the one `setup-remote-runner.ps1`
 registered):
 
-```powershell
-Start-ScheduledTask -TaskName "GHRunner-<Label>"
-```
-
-Replace `<Label>` with your DevBox label (e.g. `GHRunner-12082026-1`).
-
+Replace `<Label>` with your DevBox label (e.g. `12082026-1`).
 **B) Manual restart** in the same admin PowerShell:
 
 ```powershell
