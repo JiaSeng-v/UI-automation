@@ -57,17 +57,17 @@ registers runners against it.
 then enable Actions: your fork → Settings → Actions → General → "Allow all
 actions" → Save.
 
-**One-time DevBox setup** (RDP in, admin PowerShell — replace `<your-handle>`):
+**One-time DevBox setup** (RDP in, admin PowerShell — one line):
 
 ```powershell
-cd $HOME
-git clone https://github.com/<your-handle>/UI-automation.git
-cd $HOME\UI-automation
-irm https://astral.sh/uv/install.ps1 | iex
-$env:Path = "$HOME\.local\bin;$env:Path"
-uv sync
-.\scripts\setup-runner.ps1 -Label ZY-30072026-1 -TesterName "Zun Yang" -OpenPR   # <INITIALS>-<DDMMYYYY>-<N>
+irm https://raw.githubusercontent.com/<your-handle>/UI-automation/main/scripts/setup-remote-runner.ps1 | iex
 ```
+
+The bootstrap clones your fork, installs `uv` + deps, prompts once for a
+runner-registration token, auto-composes a `<DDMMYYYY>[-<suffix>]-<N>`
+label, registers the runner, and pushes the workflow update to your
+fork's `main`. See [`docs/REMOTE_RUNNING.md`](docs/REMOTE_RUNNING.md) for
+the full walkthrough.
 
 **Day-to-day (browser only):** Open your fork's Actions tab
 (`https://github.com/<your-handle>/UI-automation/actions/workflows/run-ui-tests.yml`) →
