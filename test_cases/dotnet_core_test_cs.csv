@@ -2,7 +2,6 @@
 Section,Key,Value
 name,,dotnet-core-test
 description,,"Dynamic, version-agnostic UI-driven conversion of the manual dotnet-core-test-source.csv scenario. Before starting, scripts/dotnet/aspnet_majors.py collect runs 'dotnet --list-runtimes' to discover every installed Microsoft.AspNetCore.App major version (8, 9, 10, 11, ... -- whatever is actually present on the machine), then the full scenario (scaffold via 'dotnet new console -o c{major} -f net{major}.0', open in VS, add a class library + project reference, edit code, breakpoint debugging, IntelliSense/lightbulb, hover, squiggle/Error List, CodeLens references, Go To Implementation, Pack, Publish, Properties, and cleanup) repeats once per discovered major version. The ONLY command-line/CLI step per iteration is the 'dotnet new console' scaffold; every other action is driven through the Visual Studio UI."
-artifacts,screenshot_dir,screenshots/{timestamp}
 
 # STEPS
 No,step no,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,max_iter,Expected

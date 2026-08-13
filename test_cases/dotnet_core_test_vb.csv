@@ -2,7 +2,6 @@
 Section,Key,Value
 name,,dotnet-core-test-vb
 description,,"Dynamic, version-agnostic UI-driven VB.NET variant of dotnet-core-test-c8 (see dotnet_core_test.csv for the C# equivalent). Before starting, scripts/dotnet/aspnet_majors.py collect runs 'dotnet --list-runtimes' to discover every installed Microsoft.AspNetCore.App major version (8, 9, 10, 11, ... -- whatever is actually present on the machine), then the full scenario (scaffold via 'dotnet new console -o v{major} -f net{major}.0 --language VB', open in VS, add a VB class library + project reference, edit Program.vb/Class1.vb, breakpoint debugging, IntelliSense/lightbulb, hover, squiggle/Error List (BC30456), CodeLens references, Go To Implementation, Pack, Publish, Properties, and cleanup) repeats once per discovered major version. NOTE: exact editor caret/pixel coordinates (breakpoint Ch position, hover target, CodeLens click, Go-To-Implementation click) were adapted by best-effort calculation from the known VB source layout (no braces/using-namespace boilerplate) and should be re-validated against a live VS window on first run."
-artifacts,screenshot_dir,screenshots/{timestamp}
 
 # STEPS
 No,1,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,max_iter,Expected
