@@ -2,28 +2,30 @@ name: Run UI Tests
 
 # How testers use this workflow (fork-based model):
 #   0. Fork william051200/UI-automation to your own account.
-#   1. Register your DevBox as a runner on YOUR FORK via
-#      scripts/setup-runner.ps1 (see docs/REMOTE_RUNNING.md).
-#   2. Open YOUR FORK's Actions tab → "Run UI Tests" → "Run workflow"
-#   3. Pick a CSV spec + your DevBox label + quiet flag → Run.
+#   1. Register your DevBox as a runner on YOUR FORK via the one-line
+#      bootstrap: scripts/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
+#   2. Open YOUR FORK's Actions tab -> "Run UI Tests" -> "Run workflow"
+#   3. Pick a CSV spec + your DevBox label -> Run.
 #
 # The `target_devbox` dropdown lists all known team labels for convenience,
-# but only labels registered on YOUR fork will actually accept the job —
+# but only labels registered on YOUR fork will actually accept the job --
 # picking someone else's label from your fork will queue forever.
 #
 # Multiple specs: pick "ALL" from the csv_spec dropdown to run every CSV
 # in test_cases/ sequentially on the chosen DevBox.
 #
 # DevBox label naming convention (used in the `target_devbox` choices below):
-#   <INITIALS>-<DDMMYYYY>-<N>   e.g. ZY-24072026-1
-#     INITIALS = tester initials
+#   <DDMMYYYY>[-<name>]-<N>          e.g. 12082026-1, 12082026-desk-2
+#   <INITIALS>-<DDMMYYYY>-<N>        (legacy) e.g. ZY-24072026-1
 #     DDMMYYYY = date DevBox was provisioned
+#     <name>   = optional label suffix (desk, laptop, etc.)
 #     N        = incrementing number if the same tester owns multiple DevBoxes
 #
-# TO REGISTER A NEW DEVBOX: run scripts/setup-runner.ps1 on the DevBox —
-# it will add the label to `target_devbox.options` on your fork
-# automatically. Merging to upstream is optional but nice so other testers
-# see the label in the seeded list when they fork.
+# TO REGISTER A NEW DEVBOX: run scripts/setup-remote-runner.ps1 on the
+# DevBox -- it clones your fork, installs deps, registers the runner, and
+# adds the label to `target_devbox.options` on your fork automatically.
+# Merging to upstream is optional but nice so other testers see the label
+# in the seeded list when they fork.
 
 on:
   workflow_dispatch:
@@ -39,25 +41,15 @@ on:
           - test_cases/console_app.csv
           - test_cases/dotnet_sdk_version.csv
           - test_cases/powershell_echo_loop.csv
+          - test_cases/razor_breakpoint.csv
           - test_cases/testcase1_console_nu1605.csv
           - test_cases/vs_nuget.csv
       target_devbox:
         description: "Which DevBox label to run on"
         required: true
-        default: "ZY-24072026-1"
         type: choice
         options:
-          # --- Add your DevBox here after running scripts/setup-runner.ps1 ---
-          - ZY-24072026-1 # Zun Yang
-          - WN-24072026-1 # William Ng
-          - YH-24072026-1 # Ying Heng
-          - HS-24072026-1 # Hui Shan
-      quiet:
-        description: "Run with -q (quiet: suppress per-step echo)"
-        required: false
-        default: true
-        type: boolean
-
+          # --- Add your DevBox here after running scripts/setup-remote-runner.ps1 ---
   # To enable nightly runs, uncomment:
   # schedule:
   #   - cron: '0 18 * * *'   # 02:00 UTC+8 (Malaysia)
@@ -82,9 +74,11 @@ jobs:
           Write-Host "Runner:  $env:RUNNER_NAME"
           Write-Host "Label:   ${{ inputs.target_devbox }}"
           Write-Host "Specs:   ${{ inputs.csv_spec }}"
-          Write-Host "Quiet:   ${{ inputs.quiet }}"
           uv --version
-          python --version
+          # uv manages its own Python; the workflow does NOT rely on a
+          # system python. Use `uv run python` if a version print is
+          # actually needed (skipped by default to avoid the Windows
+          # 'python.exe' Store-stub failure on fresh DevBoxes).
 
       # Pre-run cleanup disabled: testers refresh their DevBox between runs.
       # Re-enable if shared/long-lived DevBoxes become common.
@@ -100,7 +94,7 @@ jobs:
         shell: powershell
         env:
           CSV_SPECS: ${{ inputs.csv_spec }}
-          QUIET: ${{ inputs.quiet }}
+          PYTHONUNBUFFERED: "1"   # stream logs live (no 8KB block buffer)
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:CSV_SPECS -eq 'ALL') {
@@ -114,11 +108,10 @@ jobs:
           } else {
             $specs = @($env:CSV_SPECS.Trim())
           }
-          $quietArg = if ($env:QUIET -eq 'true') { @('-q') } else { @() }
           $overall = 0
           foreach ($spec in $specs) {
             Write-Host "`n===== Running: $spec =====" -ForegroundColor Cyan
-            .\run.ps1 $spec @quietArg
+            .\run.ps1 $spec
             $rc = $LASTEXITCODE
             Write-Host "----- Exit: $rc -----" -ForegroundColor $(if ($rc -eq 0) { 'Green' } else { 'Red' })
             if ($rc -ne 0 -and $overall -eq 0) { $overall = $rc }
