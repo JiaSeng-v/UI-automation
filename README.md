@@ -35,18 +35,6 @@ Exit codes: `0` pass, `1` assertion failed, `2` runner error.
 
 Add `-q` (or `--quiet`) to suppress per-step echo and successful subcommand stdout; failures, stderr, and the final RESULT line are always shown.
 
-## Author a new scenario
-
-Describe your scenario as plain numbered steps and let an AI agent convert it into a runnable CSV test case — you don't need to know which script implements each action or its arguments:
-
-```text
-1. Open Notepad from the Start menu.
-2. Type "hello from copilot".
-3. Save as %TEMP%\out.txt with Ctrl+S.
-4. Assert the file exists.
-5. Close Notepad.
-```
-
 > Convert these steps into `test_cases/notepad_save.csv` and validate it by running `.\run.ps1 test_cases\notepad_save.csv -q`.
 
 See [`docs/authoring-scenarios.md`](docs/authoring-scenarios.md) for the full workflow and more example prompts.
@@ -94,25 +82,20 @@ If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any o
 
 ### Standard Copilot prompts
 
-Replace the placeholder paths before submitting a prompt. The skills contain the procedure and `AGENTS.md` contains the mandatory authoring rules.
-
-#### 1. Convert a rough test case
-
-Save the rough file as `test_cases\drafts\<name>.csv`. Copilot writes the standard file to `test_cases\<name>.csv` using the same base filename.
+**Convert a rough test case:**
 
 ```text
 Use the csv-test-formatter skill.
-Source file: test_cases\drafts\<name>.csv
+TARGET FILE: test_cases\drafts\<name>.csv
+OUTPUT FILE: test_cases\<name>.csv
 ```
 
-Copilot infers `test_cases\<name>.csv`. Add `Output file: <OUTPUT_FILE>` only when you need a different destination.
-
-#### 2. Run and automatically repair a test case
+**Run and repair a test case:**
 
 ```text
 Use the test-case-repair skill.
-Test case file: <TEST_CASE_FILE>
-Report file: <REPORT_FILE>
+TARGET FILE: test_cases\<name>.csv
+REPORT FILE: test_cases\<name>_repair_report.html
 ```
 
 ### Install the Copilot CLI
