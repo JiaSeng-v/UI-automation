@@ -60,7 +60,10 @@ def main():
 
     def read_item_elems():
         try:
-            return list(combo.descendants(control_type="ListItem"))
+            items = list(combo.descendants(control_type="ListItem"))
+            if items:
+                return items
+            return list(win.descendants(control_type="ListItem"))
         except Exception:
             return []
 
