@@ -6,6 +6,12 @@ on stderr and the last failure output.
 """
 import argparse, os, subprocess, sys, time
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 PY = sys.executable
 HERE = os.path.dirname(os.path.abspath(__file__))
 _REPO_ROOT = os.path.dirname(os.path.dirname(HERE))
