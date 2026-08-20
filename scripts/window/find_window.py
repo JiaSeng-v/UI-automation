@@ -26,6 +26,12 @@ def main():
                         "assertions -- e.g. 'window is gone' -- stay fast).")
     p.add_argument("--poll-ms", dest="poll_ms", type=int, default=300,
                    help="poll interval in ms when --timeout-ms > 0 (default 300).")
+    p.add_argument("--min-height", dest="min_height", type=int, default=0,
+                   help="only match windows at least this tall in pixels (default 0 = no filter). "
+                        "Useful for a generic class like 'Popup', which Windows also assigns to small, "
+                        "unrelated transient windows (e.g. shell tooltips/artifacts) -- confirmed live "
+                        "that this can otherwise cause a VS context menu's Popup window to be missed in "
+                        "favor of one of these unrelated, much shorter Popup windows.")
     a = p.parse_args()
     if a.nth is not None and a.nth < 1:
         p.error("--nth must be a 1-based integer")
@@ -48,6 +54,8 @@ def main():
                     if a.cls and w.class_name() != a.cls:
                         continue
                     r = w.rectangle()
+                    if a.min_height > 0 and (r.bottom - r.top) < a.min_height:
+                        continue
                     matches.append((w.process_id(), w.handle, r.left, r.top, r.right, r.bottom, title))
                     seen.add(w.handle)
                 except Exception:
