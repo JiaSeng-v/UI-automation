@@ -152,7 +152,8 @@ def pick_latest(items, prefer_preview):
     if prefer_preview:
         previews = [x for x in at_max if x[2][3]]
         if previews:
-            return previews[0][0], previews[0][1]
+            previews_sorted = sorted(previews, key=lambda x: (0 if x[2][2] else 1, x[0]))
+            return previews_sorted[0][0], previews_sorted[0][1]
     non_preview = [x for x in at_max if not x[2][3]]
     pool = non_preview or at_max
     lts_first = sorted(pool, key=lambda x: (0 if x[2][2] else 1, x[0]))

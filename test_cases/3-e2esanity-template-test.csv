@@ -2,7 +2,6 @@
 Section,Key,Value
 name,,3-e2esanity-template-test
 description,,"Open Visual Studio Insiders via Start menu, walk the .NET MAUI App new-project wizard to verify the default Framework equals the latest .NET x.x offered, back out and create a Console App picking the latest Framework (preferring Preview when present), build it, run it and assert `Hello, World!` in the debug console, close everything, then reopen VS Insiders and repeat the Console App wizard walk to confirm the default Framework matches the one selected during the first run."
-artifacts,screenshot_dir,screenshots/{timestamp}
 
 # STEPS
 No,step no,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,max_iter,Expected
