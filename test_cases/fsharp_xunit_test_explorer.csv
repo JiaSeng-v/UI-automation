@@ -2,7 +2,6 @@
 Section,Key,Value
 name,,fsharp_xunit_test_explorer
 description,,"Create fixed F# class-library and xUnit projects; run one passing and one intentionally failing test in Visual Studio Test Explorer; debug the failed test and verify the xUnit equality exception; then correct the expected value and verify that both tests pass."
-artifacts,screenshot_dir,screenshots/{timestamp}
 
 # STEPS
 No,step no,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,max_iter,Expected

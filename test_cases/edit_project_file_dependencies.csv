@@ -2,7 +2,6 @@
 Section,Key,Value
 name,,edit_project_file_dependencies
 description,,"Create fixed C# console and class-library projects; edit the console .csproj in Visual Studio Insiders to add multiple target frameworks, Newtonsoft.Json 13.0.1, a project reference, and a Compile Remove item; include the excluded file through Solution Explorer; verify the package Properties; update Newtonsoft.Json to 13.0.4 through NuGet Package Manager; and remove the project reference."
-artifacts,screenshot_dir,screenshots/{timestamp}
 
 # STEPS
 No,step no,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,max_iter,Expected

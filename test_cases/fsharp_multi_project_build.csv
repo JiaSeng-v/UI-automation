@@ -2,7 +2,6 @@
 Section,Key,Value
 name,,fsharp_multi_project_build
 description,,"Create a reproducible F# Console Application targeting .NET Framework 4.7.2 and an F# Class Library targeting .NET Standard 2.0; open the solution in Visual Studio Insiders; verify IntelliSense proposes the library namespace; rebuild successfully; debug to a breakpoint and validate console output; then inspect the Application and Build property pages."
-artifacts,screenshot_dir,screenshots/{timestamp}
 
 # STEPS
 No,step no,Main step,Trigger,script,args,wait_ms,capture,expect_exit,expected_contains,poll_total_ms,poll_interval_ms,screenshot_pass,screenshot_fail,max_iter,Expected
