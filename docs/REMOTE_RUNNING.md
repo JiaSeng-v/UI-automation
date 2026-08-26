@@ -202,7 +202,13 @@ git merge upstream/main   # or: git rebase upstream/main
 git push origin main
 ```
 
-Then re-run `uv sync` if `pyproject.toml` / `uv.lock` changed.
+Then re-run `uv sync` if `pyproject.toml` / `uv.lock` changed. Point it
+at the CI-shared venv so the next workflow run stays a no-op:
+
+```powershell
+$env:UV_PROJECT_ENVIRONMENT = 'C:\uv-venvs\ui-automation'
+uv sync
+```
 
 ---
 

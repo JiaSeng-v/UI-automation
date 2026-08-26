@@ -108,7 +108,9 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
 $env:Path = "$HOME\.local\bin;$env:Path"
 Write-Ok "uv: $(uv --version)"
 
-Write-Step "Running 'uv sync'..."
+# Match UV_PROJECT_ENVIRONMENT in .github/workflows/run-ui-tests.yml so setup pre-warms the CI venv.
+$env:UV_PROJECT_ENVIRONMENT = 'C:\uv-venvs\ui-automation'
+Write-Step "Running 'uv sync' (venv: $env:UV_PROJECT_ENVIRONMENT)..."
 uv sync
 if ($LASTEXITCODE -ne 0) { throw "uv sync failed." }
 Write-Ok "Python environment ready."
