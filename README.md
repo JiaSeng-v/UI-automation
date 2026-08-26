@@ -82,11 +82,19 @@ If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any o
 
 ### Standard Copilot prompts
 
-**Convert a rough test case:**
+**Convert a rough CSV test case:**
 
 ```text
 Use the csv-test-formatter skill.
 TARGET FILE: test_cases\drafts\<name>.csv
+OUTPUT FILE: test_cases\<name>.csv
+```
+
+**Convert a Markdown test case:**
+
+```text
+Use the csv-test-formatter skill.
+TARGET FILE: test_cases\drafts\<name>.md
 OUTPUT FILE: test_cases\<name>.csv
 ```
 
