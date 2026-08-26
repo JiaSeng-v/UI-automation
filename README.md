@@ -117,7 +117,7 @@ OUTPUT FILE: test_cases\<name>.csv
 ```text
 Use the test-case-repair skill.
 TARGET FILE: test_cases\<name>.csv
-REPORT FILE: test_cases\<name>_repair_report.html
+REPORT FILE: result\<name>.html
 ```
 
 ### Install the Copilot CLI

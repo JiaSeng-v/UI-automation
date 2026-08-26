@@ -1,6 +1,6 @@
 ---
 name: test-case-repair
-description: Run a ui-auto CSV test case, repair each failing step with the smallest safe CSV change, rerun until it passes or is blocked, and write an HTML repair report matching test_cases/console_app_repair_report.html.
+description: Run a ui-auto CSV test case, repair each failing step with the smallest safe CSV change, rerun until it passes or is blocked, and write an HTML repair report matching result/repair-report-example.html.
 ---
 
 # Test case repair
@@ -10,12 +10,14 @@ Repair one existing CSV test case automatically. Follow `AGENTS.md` for authorin
 ## Input and output
 
 - Required input: the CSV path.
-- Report path: replace `.csv` with `_repair_report.html` unless the user provides a path.
+- Default report path: `result\<csv-name>.html`.
+- Create the `result\` directory when it does not exist.
+- A user-provided report path overrides the default.
 - If no CSV path is provided, ask for it instead of guessing.
 
 ## Workflow
 
-1. Run the complete test:
+1. Run the complete test and record its elapsed time:
 
 ```powershell
 .\run.ps1 test_cases\<name>.csv -q
@@ -39,7 +41,18 @@ uv run python scripts\csvfmt\csv_loader.py test_cases\<name>.csv
 
 ## Report
 
-Use `test_cases/console_app_repair_report.html` as the format. Write standalone UTF-8 HTML, escape inserted text, list one row per failed attempt, and show final result `PASS` or `BLOCKED`. Do not add a row for the final successful run.
+Use `result/repair-report-example.html` as the format. Write standalone UTF-8 HTML and escape inserted text.
+
+The report must show:
+
+- A summary with the test case path, final result (`PASS` or `BLOCKED`), total run attempts, total run time, repairs applied, and final verification outcome.
+- One repair-history row per failed attempt with the attempt number, failed step id and `Trigger`, observed failure, supporting evidence, exact CSV change, and the next run's outcome.
+- The single blocking reason when the final result is `BLOCKED`.
+- Links to relevant screenshots or other artifacts when they exist. Use relative paths so the report remains portable.
+
+Do not add a repair-history row for the final successful run.
+
+`Total run time` is the sum of the elapsed time of every `run.ps1` attempt. Do not include time spent inspecting failures or editing the CSV. Format it as `Hh Mm Ss`, omitting zero-value units.
 
 ## Final response
 
