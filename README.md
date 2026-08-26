@@ -35,6 +35,20 @@ Exit codes: `0` pass, `1` assertion failed, `2` runner error.
 
 Add `-q` (or `--quiet`) to suppress per-step echo and successful subcommand stdout; failures, stderr, and the final RESULT line are always shown.
 
+**On any step failure**, before reporting `RESULT: FAIL`, the runner automatically: screenshots the current UI state, screenshots the console/log window if the CSV captured one (a `capture` var whose name contains `cmd`/`console`, e.g. `vars.cmd_hwnd`), and force-closes every window handle the CSV captured (via `close_window.py --force`) so a failed run doesn't leave apps/consoles orphaned for the next run. Each of these is best-effort and never masks the original failure.
+
+## Author a new scenario
+
+Describe your scenario as plain numbered steps and let an AI agent convert it into a runnable CSV test case — you don't need to know which script implements each action or its arguments:
+
+```text
+1. Open Notepad from the Start menu.
+2. Type "hello from copilot".
+3. Save as %TEMP%\out.txt with Ctrl+S.
+4. Assert the file exists.
+5. Close Notepad.
+```
+
 > Convert these steps into `test_cases/notepad_save.csv` and validate it by running `.\run.ps1 test_cases\notepad_save.csv -q`.
 
 See [`docs/authoring-scenarios.md`](docs/authoring-scenarios.md) for the full workflow and more example prompts.

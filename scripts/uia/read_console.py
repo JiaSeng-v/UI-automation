@@ -142,6 +142,7 @@ def _try_clipboard_console_read(win):
 
 def _visible_text_dump(win):
     out = []
+    best = ""
 
     try:
         controls = win.descendants()
@@ -153,9 +154,13 @@ def _visible_text_dump(win):
             text = _clean(ctrl.window_text())
             if text:
                 out.append(text)
+                if ctrl.element_info.control_type == "Text" and len(text) > len(best):
+                    best = text
         except Exception:
             continue
 
+    if len(best) > 50:
+        return best
     return "\n".join(out)
 
 
