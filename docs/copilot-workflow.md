@@ -43,7 +43,9 @@ The runner executes each script, substitutes captured variables, polls assertion
 
 Ask Copilot to use the `test-case-repair` skill. Copilot runs the test, repairs one evidence-backed failure at a time, validates the CSV after each edit, reruns the complete test, and writes an HTML repair report.
 
-The repair stops with `BLOCKED` instead of guessing when it needs unavailable software, credentials, permissions, unknown user intent, or a new script or schema capability.
+When evidence proves that existing scripts cannot handle the observed behavior, repair automatically invokes `test-script-developer`. That skill adds the smallest backward-compatible script capability, its unit test and documentation, updates only the failed CSV row, and returns control to the same repair run.
+
+The repair stops with `BLOCKED` instead of guessing when it needs unavailable software, credentials, permissions, unknown user intent, a schema change, or behavior that cannot be verified.
 
 ## Responsibility
 

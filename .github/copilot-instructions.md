@@ -6,6 +6,8 @@ For CSV conversion, use `.github/skills/csv-test-formatter/SKILL.md`.
 
 For failing CSV repair, use `.github/skills/test-case-repair/SKILL.md`.
 
+When repair evidence proves that existing scripts cannot handle an observed behavior, use `.github/skills/test-script-developer/SKILL.md`.
+
 The executable CSV contract is `scripts/csvfmt/csv_schema.py`. The canonical starter example is `test_cases/_template.csv`. Validate generated CSV with:
 
 ```powershell

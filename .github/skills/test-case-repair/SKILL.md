@@ -26,18 +26,19 @@ Repair one existing CSV test case automatically. Follow `AGENTS.md` for authorin
 2. If it passes, create an empty repair report with final result `PASS`.
 3. If it fails, record the attempt, failed step, failure, and exact fix.
 4. Inspect the failed row, dependent rows, stderr, and relevant artifacts.
-5. Make the smallest deterministic CSV change supported by observed evidence.
-6. Do not weaken assertions, change tester intent, or guess unknown selectors.
-7. Validate the edited CSV:
+5. If an existing script can handle the behavior, make the smallest deterministic CSV change supported by observed evidence.
+6. If evidence proves that existing scripts cannot handle the observed behavior, automatically invoke `test-script-developer`. It adds the smallest backward-compatible script capability, its unit test, documentation, and the failed-row CSV change, then returns control to this repair run.
+7. Do not weaken assertions, change tester intent, or guess unknown selectors.
+8. Validate the edited CSV:
 
 ```powershell
 uv run python scripts\csvfmt\csv_loader.py test_cases\<name>.csv
 ```
 
-8. Rerun the complete test.
-9. Repeat while failures provide evidence for a safe repair.
-10. Stop with `BLOCKED` when progress requires unavailable software, credentials, permissions, user intent, or a new script or schema capability.
-11. Always write the HTML report.
+9. Rerun the complete test.
+10. Repeat while failures provide evidence for a safe repair.
+11. Stop with `BLOCKED` when progress requires unavailable software, credentials, permissions, user intent, a schema change, or a script behavior that cannot be verified.
+12. Always write the HTML report.
 
 ## Report
 
