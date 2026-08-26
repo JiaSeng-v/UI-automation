@@ -35,6 +35,8 @@ Exit codes: `0` pass, `1` assertion failed, `2` runner error.
 
 Add `-q` (or `--quiet`) to suppress per-step echo and successful subcommand stdout; failures, stderr, and the final RESULT line are always shown.
 
+**On any step failure**, before reporting `RESULT: FAIL`, the runner automatically: screenshots the current UI state, screenshots the console/log window if the CSV captured one (a `capture` var whose name contains `cmd`/`console`, e.g. `vars.cmd_hwnd`), and force-closes every window handle the CSV captured (via `close_window.py --force`) so a failed run doesn't leave apps/consoles orphaned for the next run. Each of these is best-effort and never masks the original failure.
+
 ## Author a new scenario
 
 Describe your scenario as plain numbered steps and let an AI agent convert it into a runnable CSV test case — you don't need to know which script implements each action or its arguments:
