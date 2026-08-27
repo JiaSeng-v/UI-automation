@@ -22,4 +22,4 @@ When direct package-index access is available, select online mode explicitly:
 .\setup.ps1 -DependencyMode Online
 ```
 
-The extracted `wheelhouse` directory is temporary and does not need to be retained. Keep `ui-auto-wheelhouse.zip` available for initial setup, repair, or rebuilding a restored DevBox baseline.
+There is no repository-local wheel directory. Setup extracts the ZIP under the system temporary path and deletes that extraction after installation. Keep `ui-auto-wheelhouse.zip` available for initial setup, repair, or rebuilding a restored DevBox baseline.

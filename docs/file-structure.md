@@ -18,6 +18,7 @@ A guided tour of every file and folder in this repo, so you can find your way ar
 | `requirements.txt` | Human-edited top-level requirements list (mirrors `pyproject.toml` deps). |
 | `requirements.lock.txt` | Fully resolved, pinned dependency list for `pip` users. |
 | `uv.lock` | `uv`-generated lockfile pinning every transitive dependency with content hashes. |
+| `ui-auto-wheelhouse.zip` | SHA-256-verified archive of the pinned Windows wheels used by offline setup. |
 | `.python-version` | Interpreter version pin used by `uv` to fetch the exact Python build. |
 | `.gitignore` | Excludes `.venv/`, `screenshots/`, and other local artifacts from git. |
 | `.venv/` | Local virtual environment created by `uv sync` (not committed). |
