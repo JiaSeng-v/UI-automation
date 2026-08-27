@@ -1,5 +1,25 @@
-cd C:\path\to\ui-auto
-Expand-Archive C:\path\to\ui-auto-wheelhouse.zip .\wheelhouse -Force
+# Offline Python dependency installation
 
-uv venv --python 3.12 --no-python-downloads
-uv pip sync --python .\.venv\Scripts\python.exe --no-index --find-links .\wheelhouse .\requirements.lock.txt
+`setup.ps1` defaults to `Wheelhouse` mode because `files.pythonhosted.org` may be unavailable. The mode verifies `ui-auto-wheelhouse.zip`, extracts it to a temporary directory, creates a Python 3.12 virtual environment, installs the exact versions from `requirements.lock.txt` without consulting a package index, and removes the extracted directory.
+
+The wheel archive contains Python packages, not the Python interpreter. If Python 3.12 is missing, setup asks uv to install its managed Python before creating the environment; this download does not use `files.pythonhosted.org`.
+
+Run the default offline setup for a local checkout:
+
+```powershell
+.\setup.ps1
+```
+
+Runner onboarding invokes the same script with the shared CI environment:
+
+```powershell
+.\setup.ps1 -EnvironmentPath 'C:\uv-venvs\ui-automation'
+```
+
+When direct package-index access is available, select online mode explicitly:
+
+```powershell
+.\setup.ps1 -DependencyMode Online
+```
+
+The extracted `wheelhouse` directory is temporary and does not need to be retained. Keep `ui-auto-wheelhouse.zip` available for initial setup, repair, or rebuilding a restored DevBox baseline.

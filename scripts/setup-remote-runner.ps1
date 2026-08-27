@@ -109,10 +109,10 @@ $env:Path = "$HOME\.local\bin;$env:Path"
 Write-Ok "uv: $(uv --version)"
 
 # Match UV_PROJECT_ENVIRONMENT in .github/workflows/run-ui-tests.yml so setup pre-warms the CI venv.
-$env:UV_PROJECT_ENVIRONMENT = 'C:\uv-venvs\ui-automation'
-Write-Step "Running 'uv sync' (venv: $env:UV_PROJECT_ENVIRONMENT)..."
-uv sync
-if ($LASTEXITCODE -ne 0) { throw "uv sync failed." }
+$projectSetup = Join-Path $RepoPath 'setup.ps1'
+$projectEnvironment = 'C:\uv-venvs\ui-automation'
+Write-Step "Installing Python dependencies (venv: $projectEnvironment)..."
+& $projectSetup -EnvironmentPath $projectEnvironment
 Write-Ok "Python environment ready."
 
 # --- Compose the DevBox label -------------------------------------------
