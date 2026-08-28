@@ -240,7 +240,7 @@ if (-not (Test-Path $workflow)) {
     Write-Warn "Workflow file not found at $workflow; skipping YAML edit."
     Write-Warn "Add '- $Label   # $GhHandle' manually under target_devbox.options."
 } else {
-    $content = Get-Content -Path $workflow -Raw
+    $content = Get-Content -Path $workflow -Raw -Encoding UTF8
     $newLine = "          - $Label # $GhHandle"
 
     if ($content -match [regex]::Escape("- $Label")) {
@@ -270,7 +270,7 @@ if (-not (Test-Path $workflow)) {
         }
 
         if ($updated) {
-            Set-Content -Path $workflow -Value $updated -NoNewline
+            Set-Content -Path $workflow -Value $updated -NoNewline -Encoding UTF8
             Write-Ok "Added '$Label # $GhHandle' to workflow."
         } else {
             Write-Warn "Could not locate target_devbox.options block in $workflow."
@@ -283,9 +283,18 @@ if (-not (Test-Path $workflow)) {
         Write-Step "Committing and pushing to origin/main..."
         Push-Location $RepoPath
         try {
+            # Re-sync in case origin/main advanced during runner install.
+            git fetch origin main 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "git fetch failed (exit $LASTEXITCODE)" }
+            git pull --rebase origin main 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "git pull --rebase failed (exit $LASTEXITCODE); resolve manually then push" }
+
             git add .github/workflows/run-ui-tests.yml
+            if ($LASTEXITCODE -ne 0) { throw "git add failed (exit $LASTEXITCODE)" }
             git commit -m "Register DevBox runner: $Label" | Out-Host
-            git push origin main | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "git commit failed (exit $LASTEXITCODE)" }
+            git push origin main 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "git push failed (exit $LASTEXITCODE)" }
             Write-Ok "Workflow updated on origin/main. Label '$Label' is now selectable."
         } catch {
             Write-Warn "Push failed: $_"
