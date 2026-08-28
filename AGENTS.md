@@ -16,7 +16,7 @@ This file follows the [agents.md](https://agents.md/) convention and is loaded a
 - `docs/file-structure.md` — what every file/folder is for.
 - `docs/reproducibility.md` — why runs must be bit-identical.
 - `docs/troubleshooting.md` — DPI, multi-monitor, UI language gotchas.
-- `test_cases/powershell_echo_loop.csv` — canonical example.
+- `test_cases/_template.csv` — canonical test-case layout.
 - `scripts/*.py` — one script per step `type`.
 
 ## Hard rules when authoring or editing a test case

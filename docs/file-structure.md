@@ -57,8 +57,8 @@ Lightweight alternative for developers who already have `uv` installed. `cd`s to
 Thin PowerShell wrapper around `uv run python run_test.py`. Takes the spec path as its first argument and forwards any remaining flags (e.g. `-q`). `Set-Location $PSScriptRoot` lets you call it from any working directory, and it propagates the runner's exit code unchanged.
 
 ```powershell
-.\run.ps1 test_cases\powershell_echo_loop.csv
-.\run.ps1 test_cases\powershell_echo_loop.csv -q
+.\run.ps1 test_cases\<test-case>.csv
+.\run.ps1 test_cases\<test-case>.csv -q
 ```
 
 ### `run_test.py`
@@ -104,4 +104,4 @@ See [`scripts-reference.md`](scripts-reference.md) for what every script does, i
 
 ## `test_cases/`
 
-Holds the declarative scenarios consumed by `run_test.py`. One file per scenario; new scenarios drop in here alongside the existing examples. See [`test-cases.md`](test-cases.md) for the catalog of available scenarios.
+Holds the declarative scenarios consumed by `run_test.py`. Active scenarios use `<type>-<ID>-<description>.csv`; legacy scenarios are retained under `test_cases/v0/`. See [`test-cases.md`](test-cases.md) for the complete directory.
