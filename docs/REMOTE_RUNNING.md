@@ -143,7 +143,7 @@ Click **Run workflow** (top-right).
 
 | Input | Meaning | Example |
 |---|---|---|
-| `csv_spec` | Pick one CSV, or `ALL` to run every case sequentially | `test_cases/powershell_echo_loop.csv` |
+| `csv_spec` | Pick one CSV, or `ALL` to run every case sequentially | `test_cases/prod-1-cs_console_app.csv` |
 | `target_devbox` | Which DevBox label to run on | `12082026-1` |
 
 Click **Run workflow**.
