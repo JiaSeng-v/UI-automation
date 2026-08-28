@@ -33,17 +33,19 @@ on:
       csv_spec:
         description: "Which test case to run"
         required: true
-        default: "test_cases/powershell_echo_loop.csv"
+        default: "test_cases/prod-1-cs_console_app.csv"
         type: choice
         options:
           # --- Update here: keep in sync with test_cases/*.csv ---
-          - ALL
-          - test_cases/console_app.csv
-          - test_cases/dotnet_sdk_version.csv
-          - test_cases/powershell_echo_loop.csv
-          - test_cases/razor_breakpoint.csv
-          - test_cases/testcase1_console_nu1605.csv
-          - test_cases/vs_nuget.csv
+          # - ALL  # to be supported in the future
+          - test_cases/e2e-3-template-test.csv
+          - test_cases/prod-1-cs_console_app.csv
+          - test_cases/prod-2-hot_reload.csv
+          - test_cases/prod-3-dotnet_core_cs.csv
+          - test_cases/prod-3-dotnet_core_vb.csv
+          - test_cases/prod-4-edit_file_dependencies.csv
+          - test_cases/prod-5-fsharp_xunit.csv
+          - test_cases/prod-6-multi_project_build.csv
       target_devbox:
         description: "Which DevBox label to run on"
         required: true
