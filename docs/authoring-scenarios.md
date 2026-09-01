@@ -9,7 +9,7 @@ This works with [GitHub Copilot CLI](https://github.com/github/gh-copilot) or an
 - Repo installed per the [README](../README.md) (`uv`, Python, deps).
 - An AI agent installed and authenticated. The quickest path is the bundled installer, which sets up both the standalone `copilot` CLI and the `gh copilot` extension and walks you through login:
   ```powershell
-  .\install-copilot.ps1
+  .\ops\install-copilot.ps1
   ```
 - The target Windows app reachable from the Start menu (or with a known launch path).
 

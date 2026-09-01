@@ -17,7 +17,7 @@ A popup that grabs focus mid-run will break typing-based steps. Re-run, or add a
 ## Execution policy
 If `irm | iex` is blocked, run:
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/william051200/UI-automation/main/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/william051200/UI-automation/main/ops/install.ps1 | iex"
 ```
 
 ## Legacy pip workflow

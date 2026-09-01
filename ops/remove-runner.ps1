@@ -7,7 +7,7 @@
     Run this on the DevBox in an Administrator PowerShell to fully
     decommission a runner:
 
-        .\scripts\remove-runner.ps1 -Label <YourLabel> -Token <RemoveToken>
+        .\ops\remove-runner.ps1 -Label <YourLabel> -Token <RemoveToken>
 
     What it does:
       1. Stop and unregister the Scheduled Task 'GHRunner-<Label>'.

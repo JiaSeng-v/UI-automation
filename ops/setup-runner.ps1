@@ -8,7 +8,7 @@
     then never again for that DevBox. After it completes, your DevBox
     is a runner reachable from your fork's Actions tab.
 
-    Normally invoked by scripts/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
+    Normally invoked by ops/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
 
 .PARAMETER Label
     The label to register this runner under. Accepted formats:
@@ -32,10 +32,10 @@
     $HOME\UI-automation
 
 .EXAMPLE
-    .\scripts\setup-runner.ps1 -Label 12082026-1
+    .\ops\setup-runner.ps1 -Label 12082026-1
 
 .EXAMPLE
-    .\scripts\setup-runner.ps1 -Label 12082026-desk-1 -Token ABCDEF...
+    .\ops\setup-runner.ps1 -Label 12082026-desk-1 -Token ABCDEF...
 
 .NOTES
     Must be run in an Administrator PowerShell (installing a Scheduled
@@ -93,7 +93,7 @@ if (-not $Repo) {
     }
     Write-Ok "Detected repo from origin: $Repo"
     if ($Repo -match '^william051200/') {
-        throw "Origin still points at the upstream repo. Fork william051200/UI-automation to your account, re-clone from your fork, and re-run setup-remote-runner.ps1."
+        throw "Origin still points at the upstream repo. Fork william051200/UI-automation to your account, re-clone from your fork, and re-run ops\setup-remote-runner.ps1."
     }
 }
 

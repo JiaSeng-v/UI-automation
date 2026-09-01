@@ -7,7 +7,7 @@ Declarative UI-automation toolkit for Windows desktop apps. Drives mouse, keyboa
 One PowerShell command on a fresh Windows 10/11 machine:
 
 ```powershell
-irm https://raw.githubusercontent.com/william051200/UI-automation/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/william051200/UI-automation/main/ops/install.ps1 | iex
 ```
 
 This installs `uv` + Python + `git` as needed, clones the repo to `%USERPROFILE%\UI-automation`, and installs all pinned dependencies.
@@ -74,7 +74,7 @@ actions" → Save.
 **One-time DevBox setup** (RDP in, admin PowerShell — one line):
 
 ```powershell
-irm https://raw.githubusercontent.com/<your-handle>/UI-automation/main/scripts/setup-remote-runner.ps1 | iex
+irm https://raw.githubusercontent.com/<your-handle>/UI-automation/main/ops/setup-remote-runner.ps1 | iex
 ```
 
 The bootstrap clones your fork, installs `uv` + deps, prompts once for a
@@ -99,13 +99,13 @@ If you have [GitHub Copilot CLI](https://github.com/github/gh-copilot) (or any o
 Don't have it yet? Run the bundled installer. It sets up **both** the standalone agentic `copilot` CLI and the `gh copilot` extension (whichever is missing), then walks you through login:
 
 ```powershell
-.\install-copilot.ps1
+.\ops\install-copilot.ps1
 ```
 
 Or one-line, straight from GitHub:
 
 ```powershell
-irm https://raw.githubusercontent.com/william051200/UI-automation/main/install-copilot.ps1 | iex
+irm https://raw.githubusercontent.com/william051200/UI-automation/main/ops/install-copilot.ps1 | iex
 ```
 
 Pass `-NoLogin` to install without the interactive sign-in prompts.
