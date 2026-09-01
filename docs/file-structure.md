@@ -9,39 +9,49 @@ A guided tour of every file and folder in this repo, so you can find your way ar
 | `README.md` | Project overview, install command, example invocation, doc index. |
 | `AGENTS.md` | Auto-loaded instructions for AI coding agents (Copilot CLI, Codex CLI, Cursor, Aider, Claude Code, …) working in this repo. Follows the [agents.md](https://agents.md/) convention. |
 | `LICENSE` | MIT license. |
-| `install.ps1` | One-line bootstrap installer for a fresh Windows machine (see [Entry points](#entry-points)). |
-| `install-copilot.ps1` | Optional installer for the GitHub Copilot CLI — sets up both the standalone `copilot` CLI and the `gh copilot` extension (whichever is missing) and triggers interactive login. |
-| `setup.ps1` | Shared dependency installer. Defaults to the verified offline wheelhouse and supports online `uv sync` when requested. |
 | `run.ps1` | Thin shortcut wrapper: `.\run.ps1 <spec> [-q]` → `uv run python run_test.py <spec> [-q]`. Lets you invoke a scenario without going through an LLM. |
 | `run_test.py` | CSV test-spec runner (see [Entry points](#entry-points)). |
 | `pyproject.toml` | Project metadata + direct dependencies (`pyautogui`, `pywinauto`, `Pillow`, `websocket-client`). Pins Python to `>=3.10,<3.13`. |
 | `requirements.txt` | Human-edited top-level requirements list (mirrors `pyproject.toml` deps). |
 | `requirements.lock.txt` | Fully resolved, pinned dependency list for `pip` users. |
 | `uv.lock` | `uv`-generated lockfile pinning every transitive dependency with content hashes. |
-| `ui-auto-wheelhouse.zip` | SHA-256-verified archive of the pinned Windows wheels used by offline setup. |
 | `.python-version` | Interpreter version pin used by `uv` to fetch the exact Python build. |
 | `.gitignore` | Excludes `.venv/`, `screenshots/`, and other local artifacts from git. |
 | `.venv/` | Local virtual environment created by `uv sync` (not committed). |
 | `screenshots/` | Per-run screenshot artifacts written under `screenshots/<name>-<timestamp>/` (not committed). |
 | `docs/` | Markdown documentation — see [docs/](#docs). |
+| `ops/` | Operational PowerShell scripts and the offline wheelhouse for installation, dependency setup, runner lifecycle management, and run cleanup. |
 | `scripts/` | Primitive Python helpers invoked by `run_test.py`, grouped into category subfolders — see [scripts/](#scripts) and [scripts-reference.md](scripts-reference.md). |
 | `test_cases/` | Declarative CSV scenarios — see [test_cases/](#test_cases). |
 | `tests/` | Stdlib `unittest` coverage for the helper scripts and the CSV loader. Run with `uv run python -m unittest discover -s tests -v`. |
 
+## `ops/`
+
+| Path | Purpose |
+|---|---|
+| `ops/install.ps1` | One-line bootstrap for a fresh Windows machine. |
+| `ops/install-copilot.ps1` | Optional GitHub Copilot CLI and `gh copilot` installer. |
+| `ops/setup.ps1` | Shared Python interpreter, virtual environment, and dependency installer. |
+| `ops/setup-remote-runner.ps1` | One-line DevBox bootstrap that clones a fork and coordinates runner registration. |
+| `ops/setup-runner.ps1` | Registers and starts a self-hosted GitHub Actions runner. |
+| `ops/remove-runner.ps1` | Decommissions a runner and removes its workflow label. |
+| `ops/finalize-run.ps1` | Cleans known UI-test processes and artifacts between remote runs. |
+| `ops/ui-auto-wheelhouse.zip` | SHA-256-verified archive of pinned Windows wheels for offline setup. |
+
 ## Entry points
 
-### `install.ps1`
+### `ops\install.ps1`
 Zero-state bootstrap for a clean Windows 10/11 machine. In order it:
 
 1. Installs `uv` from `astral.sh` if missing.
 2. Installs `git` via `winget` if missing.
 3. Clones (or `git pull`s) the repo into `%USERPROFILE%\UI-automation`.
-4. Calls `setup.ps1` to create the Python environment and install all pinned dependencies.
+4. Calls `ops\setup.ps1` to create the Python environment and install all pinned dependencies.
 5. Prints the example command to run the bundled scenario.
 
-Designed to be invoked via `irm https://raw.githubusercontent.com/william051200/UI-automation/main/install.ps1 | iex`.
+Designed to be invoked via `irm https://raw.githubusercontent.com/william051200/UI-automation/main/ops/install.ps1 | iex`.
 
-### `install-copilot.ps1`
+### `ops\install-copilot.ps1`
 Optional, standalone installer for the GitHub Copilot CLI — useful for users whose machines don't have it set up yet. Idempotent; in order it:
 
 1. Installs the standalone agentic `copilot` CLI via `winget install GitHub.Copilot` (falling back to `npm install -g @github/copilot`, installing Node.js LTS first if needed).
@@ -49,10 +59,10 @@ Optional, standalone installer for the GitHub Copilot CLI — useful for users w
 3. Installs (or upgrades) the `gh copilot` extension.
 4. Triggers interactive login: `gh auth login` if not already authenticated, then launches `copilot` so you can run its `/login` slash command.
 
-Pass `-NoLogin` to skip the sign-in prompts. Invoke locally with `.\install-copilot.ps1` or via `irm https://raw.githubusercontent.com/william051200/UI-automation/main/install-copilot.ps1 | iex`.
+Pass `-NoLogin` to skip the sign-in prompts. Invoke locally with `.\ops\install-copilot.ps1` or via `irm https://raw.githubusercontent.com/william051200/UI-automation/main/ops/install-copilot.ps1 | iex`.
 
-### `setup.ps1`
-Shared dependency installer for developers and remote-runner onboarding. It verifies that `uv` is on `PATH` and defaults to installing `requirements.lock.txt` from the SHA-256-verified `ui-auto-wheelhouse.zip` without using a package index. Pass `-DependencyMode Online` to use `uv sync`, or `-EnvironmentPath` to target an environment other than the local `.venv`. Use `install.ps1` instead on a fresh machine.
+### `ops\setup.ps1`
+Shared dependency installer for developers and remote-runner onboarding. It verifies that `uv` is on `PATH` and defaults to installing `requirements.lock.txt` from the SHA-256-verified `ops\ui-auto-wheelhouse.zip` without using a package index. Pass `-DependencyMode Online` to use `uv sync`, or `-EnvironmentPath` to target an environment other than the local `.venv`. Use `ops\install.ps1` instead on a fresh machine.
 
 ### `run.ps1`
 Thin PowerShell wrapper around `uv run python run_test.py`. Takes the spec path as its first argument and forwards any remaining flags (e.g. `-q`). `Set-Location $PSScriptRoot` lets you call it from any working directory, and it propagates the runner's exit code unchanged.

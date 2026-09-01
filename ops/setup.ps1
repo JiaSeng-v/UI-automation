@@ -1,4 +1,4 @@
-# setup.ps1 - Install project dependencies into a uv-managed environment.
+# ops/setup.ps1 - Install project dependencies into a uv-managed environment.
 #
 # Defaults to the bundled wheelhouse because files.pythonhosted.org may be
 # unavailable. Use -DependencyMode Online when direct package access is usable.
@@ -7,7 +7,7 @@ param(
     [ValidateSet('Online', 'Wheelhouse')]
     [string]$DependencyMode = 'Wheelhouse',
 
-    [string]$EnvironmentPath = (Join-Path $PSScriptRoot '.venv'),
+    [string]$EnvironmentPath = (Join-Path (Split-Path $PSScriptRoot -Parent) '.venv'),
 
     [string]$WheelhouseZip = (Join-Path $PSScriptRoot 'ui-auto-wheelhouse.zip'),
 
@@ -15,10 +15,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-Set-Location $PSScriptRoot
+$RepoRoot = Split-Path $PSScriptRoot -Parent
+Set-Location $RepoRoot
 
 if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-    throw 'uv not found on PATH. Run install.ps1 instead, or: irm https://astral.sh/uv/install.ps1 | iex'
+    throw 'uv not found on PATH. Run ops\install.ps1 instead, or: irm https://astral.sh/uv/install.ps1 | iex'
 }
 
 function Install-Dependencies {
@@ -76,7 +77,7 @@ function Install-Dependencies {
                     --python (Join-Path $EnvironmentPath 'Scripts\python.exe') `
                     --no-index `
                     --find-links $temporaryWheelhouse `
-                    (Join-Path $PSScriptRoot 'requirements.lock.txt')
+                    (Join-Path $RepoRoot 'requirements.lock.txt')
                 if ($LASTEXITCODE -ne 0) {
                     throw "uv pip sync failed with exit code $LASTEXITCODE."
                 }

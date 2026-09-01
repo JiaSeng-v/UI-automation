@@ -3,7 +3,7 @@ name: Run UI Tests
 # How testers use this workflow (fork-based model):
 #   0. Fork william051200/UI-automation to your own account.
 #   1. Register your DevBox as a runner on YOUR FORK via the one-line
-#      bootstrap: scripts/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
+#      bootstrap: ops/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
 #   2. Open YOUR FORK's Actions tab -> "Run UI Tests" -> "Run workflow"
 #   3. Pick a CSV spec + your DevBox label -> Run.
 #
@@ -21,7 +21,7 @@ name: Run UI Tests
 #     <name>   = optional label suffix (desk, laptop, etc.)
 #     N        = incrementing number if the same tester owns multiple DevBoxes
 #
-# TO REGISTER A NEW DEVBOX: run scripts/setup-remote-runner.ps1 on the
+# TO REGISTER A NEW DEVBOX: run ops/setup-remote-runner.ps1 on the
 # DevBox -- it clones your fork, installs deps, registers the runner, and
 # adds the label to `target_devbox.options` on your fork automatically.
 # Merging to upstream is optional but nice so other testers see the label
@@ -51,7 +51,7 @@ on:
         required: true
         type: choice
         options:
-          # --- Add your DevBox here after running scripts/setup-remote-runner.ps1 ---
+          # --- Add your DevBox here after running ops/setup-remote-runner.ps1 ---
   # To enable nightly runs, uncomment:
   # schedule:
   #   - cron: '0 18 * * *'   # 02:00 UTC+8 (Malaysia)
@@ -89,7 +89,7 @@ jobs:
       # Re-enable if shared/long-lived DevBoxes become common.
       # - name: Pre-run cleanup
       #   shell: powershell
-      #   run: .\scripts\finalize-run.ps1
+      #   run: .\ops\finalize-run.ps1
 
       - name: Sync dependencies
         shell: powershell
@@ -137,4 +137,4 @@ jobs:
       # - name: Post-run cleanup
       #   if: always()
       #   shell: powershell
-      #   run: .\scripts\finalize-run.ps1
+      #   run: .\ops\finalize-run.ps1
