@@ -1,6 +1,6 @@
 # One-line DevBox setup for the UI-automation self-hosted runner (fork-based model).
 # Run this ONCE per DevBox in an Administrator PowerShell:
-#   irm https://raw.githubusercontent.com/<your-handle>/UI-automation/main/scripts/setup-remote-runner.ps1 | iex
+#   irm https://raw.githubusercontent.com/<your-handle>/UI-automation/main/ops/setup-remote-runner.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
 
@@ -109,10 +109,10 @@ $env:Path = "$HOME\.local\bin;$env:Path"
 Write-Ok "uv: $(uv --version)"
 
 # Match UV_PROJECT_ENVIRONMENT in .github/workflows/run-ui-tests.yml so setup pre-warms the CI venv.
-$env:UV_PROJECT_ENVIRONMENT = 'C:\uv-venvs\ui-automation'
-Write-Step "Running 'uv sync' (venv: $env:UV_PROJECT_ENVIRONMENT)..."
-uv sync
-if ($LASTEXITCODE -ne 0) { throw "uv sync failed." }
+$projectSetup = Join-Path $RepoPath 'ops\setup.ps1'
+$projectEnvironment = 'C:\uv-venvs\ui-automation'
+Write-Step "Installing Python dependencies (venv: $projectEnvironment)..."
+& $projectSetup -EnvironmentPath $projectEnvironment
 Write-Ok "Python environment ready."
 
 # --- Compose the DevBox label -------------------------------------------
@@ -146,6 +146,6 @@ $Token = Read-Host "Token"
 if (-not $Token) { throw "No token provided." }
 
 # --- Delegate to setup-runner.ps1 ---------------------------------------
-Write-Step "Invoking scripts\setup-runner.ps1..."
-$setupRunner = Join-Path $RepoPath 'scripts\setup-runner.ps1'
+Write-Step "Invoking ops\setup-runner.ps1..."
+$setupRunner = Join-Path $RepoPath 'ops\setup-runner.ps1'
 & $setupRunner -Label $Label -Repo $Repo -Token $Token -RepoPath $RepoPath

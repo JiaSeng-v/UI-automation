@@ -79,7 +79,7 @@ entirely browser-driven from your laptop.
 Paste this **single line** (replace `<your-handle>` with your GitHub handle):
 
 ```powershell
-irm https://raw.githubusercontent.com/<your-handle>/UI-automation/main/scripts/setup-remote-runner.ps1 | iex
+irm https://raw.githubusercontent.com/<your-handle>/UI-automation/main/ops/setup-remote-runner.ps1 | iex
 ```
 
 The script will:
@@ -143,7 +143,7 @@ Click **Run workflow** (top-right).
 
 | Input | Meaning | Example |
 |---|---|---|
-| `csv_spec` | Pick one CSV, or `ALL` to run every case sequentially | `test_cases/powershell_echo_loop.csv` |
+| `csv_spec` | Pick one CSV, or `ALL` to run every case sequentially | `test_cases/prod-1-cs_console_app.csv` |
 | `target_devbox` | Which DevBox label to run on | `12082026-1` |
 
 Click **Run workflow**.
@@ -167,7 +167,7 @@ https://github.com/<your-handle>/UI-automation/settings/actions/runners
 
 If your runner shows **Offline** (grey dot), restart it — pick either:
 
-**A) One-liner via the Scheduled Task** (the one `setup-remote-runner.ps1`
+**A) One-liner via the Scheduled Task** (the one `ops\setup-remote-runner.ps1`
 registered):
 
 Replace `<Label>` with your DevBox label (e.g. `12082026-1`).
@@ -222,7 +222,7 @@ Each workflow run performs these steps on the DevBox:
 
 > **DevBox hygiene:** testers refresh their DevBox between runs, so the
 > workflow does **not** perform pre/post cleanup today. A cleanup script
-> (`scripts/finalize-run.ps1`) is checked in and the workflow has commented
+> (`ops/finalize-run.ps1`) is checked in and the workflow has commented
 > pre/post steps ready to enable if we ever move to shared or long-lived
 > DevBoxes.
 
@@ -230,7 +230,7 @@ Each workflow run performs these steps on the DevBox:
 
 ## Adding another DevBox for yourself
 
-Same one-liner as Part B — `setup-remote-runner.ps1` auto-composes a fresh
+Same one-liner as Part B — `ops\setup-remote-runner.ps1` auto-composes a fresh
 label. `<N>` auto-increments by scanning the existing labels on your
 fork's workflow, so a second DevBox provisioned on the same day + same
 suffix becomes `<DDMMYYYY>[-<suffix>]-2`. Each label is unique per DevBox;
@@ -249,7 +249,7 @@ the previous DevBox will silently stop receiving jobs.
 | `The system cannot find the file specified` at UIA step | The DevBox is locked or logged off. Unlock and re-run. |
 | Screenshots artifact missing | The CSV didn't write any screenshots (some don't) — not an error. |
 | `uv sync` fails with `python not found` | First run on a fresh DevBox — `uv` will fetch Python. Re-trigger the workflow. |
-| Runner appears twice in Settings → Runners | You re-registered without unregistering. Run `scripts\remove-runner.ps1 -Label <old-label>` on the DevBox to decommission the stale entry, then re-run `setup-remote-runner.ps1`. |
+| Runner appears twice in Settings → Runners | You re-registered without unregistering. Run `ops\remove-runner.ps1 -Label <old-label>` on the DevBox to decommission the stale entry, then re-run `ops\setup-remote-runner.ps1`. |
 | Two workflows fought over the same DevBox | The workflow uses a `concurrency` group per label, so this shouldn't happen. If you see interleaved logs, file a bug. |
 
 ---
@@ -272,7 +272,7 @@ Then run:
 
 ```powershell
 cd $HOME\UI-automation
-.\scripts\remove-runner.ps1 -Label <YourLabel> -Token <RemoveToken>
+.\ops\remove-runner.ps1 -Label <YourLabel> -Token <RemoveToken>
 ```
 
 This will:
@@ -287,7 +287,7 @@ If the runner is already gone from Settings -> Runners (or the token
 endpoint 404s), use `-LocalOnly` to skip the GitHub-side deregistration:
 
 ```powershell
-.\scripts\remove-runner.ps1 -Label <YourLabel> -LocalOnly
+.\ops\remove-runner.ps1 -Label <YourLabel> -LocalOnly
 ```
 
 ---

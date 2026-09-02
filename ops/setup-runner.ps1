@@ -8,7 +8,7 @@
     then never again for that DevBox. After it completes, your DevBox
     is a runner reachable from your fork's Actions tab.
 
-    Normally invoked by scripts/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
+    Normally invoked by ops/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
 
 .PARAMETER Label
     The label to register this runner under. Accepted formats:
@@ -32,10 +32,10 @@
     $HOME\UI-automation
 
 .EXAMPLE
-    .\scripts\setup-runner.ps1 -Label 12082026-1
+    .\ops\setup-runner.ps1 -Label 12082026-1
 
 .EXAMPLE
-    .\scripts\setup-runner.ps1 -Label 12082026-desk-1 -Token ABCDEF...
+    .\ops\setup-runner.ps1 -Label 12082026-desk-1 -Token ABCDEF...
 
 .NOTES
     Must be run in an Administrator PowerShell (installing a Scheduled
@@ -93,7 +93,7 @@ if (-not $Repo) {
     }
     Write-Ok "Detected repo from origin: $Repo"
     if ($Repo -match '^william051200/') {
-        throw "Origin still points at the upstream repo. Fork william051200/UI-automation to your account, re-clone from your fork, and re-run setup-remote-runner.ps1."
+        throw "Origin still points at the upstream repo. Fork william051200/UI-automation to your account, re-clone from your fork, and re-run ops\setup-remote-runner.ps1."
     }
 }
 
@@ -240,7 +240,7 @@ if (-not (Test-Path $workflow)) {
     Write-Warn "Workflow file not found at $workflow; skipping YAML edit."
     Write-Warn "Add '- $Label   # $GhHandle' manually under target_devbox.options."
 } else {
-    $content = Get-Content -Path $workflow -Raw
+    $content = Get-Content -Path $workflow -Raw -Encoding UTF8
     $newLine = "          - $Label # $GhHandle"
 
     if ($content -match [regex]::Escape("- $Label")) {
@@ -270,7 +270,7 @@ if (-not (Test-Path $workflow)) {
         }
 
         if ($updated) {
-            Set-Content -Path $workflow -Value $updated -NoNewline
+            Set-Content -Path $workflow -Value $updated -NoNewline -Encoding UTF8
             Write-Ok "Added '$Label # $GhHandle' to workflow."
         } else {
             Write-Warn "Could not locate target_devbox.options block in $workflow."
@@ -283,9 +283,18 @@ if (-not (Test-Path $workflow)) {
         Write-Step "Committing and pushing to origin/main..."
         Push-Location $RepoPath
         try {
+            # Re-sync in case origin/main advanced during runner install.
+            git fetch origin main 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "git fetch failed (exit $LASTEXITCODE)" }
+            git pull --rebase origin main 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "git pull --rebase failed (exit $LASTEXITCODE); resolve manually then push" }
+
             git add .github/workflows/run-ui-tests.yml
+            if ($LASTEXITCODE -ne 0) { throw "git add failed (exit $LASTEXITCODE)" }
             git commit -m "Register DevBox runner: $Label" | Out-Host
-            git push origin main | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "git commit failed (exit $LASTEXITCODE)" }
+            git push origin main 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "git push failed (exit $LASTEXITCODE)" }
             Write-Ok "Workflow updated on origin/main. Label '$Label' is now selectable."
         } catch {
             Write-Warn "Push failed: $_"

@@ -3,7 +3,7 @@ name: Run UI Tests
 # How testers use this workflow (fork-based model):
 #   0. Fork william051200/UI-automation to your own account.
 #   1. Register your DevBox as a runner on YOUR FORK via the one-line
-#      bootstrap: scripts/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
+#      bootstrap: ops/setup-remote-runner.ps1 (see docs/REMOTE_RUNNING.md).
 #   2. Open YOUR FORK's Actions tab -> "Run UI Tests" -> "Run workflow"
 #   3. Pick a CSV spec + your DevBox label -> Run.
 #
@@ -21,7 +21,7 @@ name: Run UI Tests
 #     <name>   = optional label suffix (desk, laptop, etc.)
 #     N        = incrementing number if the same tester owns multiple DevBoxes
 #
-# TO REGISTER A NEW DEVBOX: run scripts/setup-remote-runner.ps1 on the
+# TO REGISTER A NEW DEVBOX: run ops/setup-remote-runner.ps1 on the
 # DevBox -- it clones your fork, installs deps, registers the runner, and
 # adds the label to `target_devbox.options` on your fork automatically.
 # Merging to upstream is optional but nice so other testers see the label
@@ -33,23 +33,25 @@ on:
       csv_spec:
         description: "Which test case to run"
         required: true
-        default: "test_cases/powershell_echo_loop.csv"
+        default: "test_cases/prod-1-cs_console_app.csv"
         type: choice
         options:
           # --- Update here: keep in sync with test_cases/*.csv ---
-          - ALL
-          - test_cases/console_app.csv
-          - test_cases/dotnet_sdk_version.csv
-          - test_cases/powershell_echo_loop.csv
-          - test_cases/razor_breakpoint.csv
-          - test_cases/testcase1_console_nu1605.csv
-          - test_cases/vs_nuget.csv
+          # - ALL  # to be supported in the future
+          - test_cases/e2e-3-template-test.csv
+          - test_cases/prod-1-cs_console_app.csv
+          - test_cases/prod-2-hot_reload.csv
+          - test_cases/prod-3-dotnet_core_cs.csv
+          - test_cases/prod-3-dotnet_core_vb.csv
+          - test_cases/prod-4-edit_file_dependencies.csv
+          - test_cases/prod-5-fsharp_xunit.csv
+          - test_cases/prod-6-multi_project_build.csv
       target_devbox:
         description: "Which DevBox label to run on"
         required: true
         type: choice
         options:
-          # --- Add your DevBox here after running scripts/setup-remote-runner.ps1 ---
+          # --- Add your DevBox here after running ops/setup-remote-runner.ps1 ---
   # To enable nightly runs, uncomment:
   # schedule:
   #   - cron: '0 18 * * *'   # 02:00 UTC+8 (Malaysia)
@@ -87,7 +89,7 @@ jobs:
       # Re-enable if shared/long-lived DevBoxes become common.
       # - name: Pre-run cleanup
       #   shell: powershell
-      #   run: .\scripts\finalize-run.ps1
+      #   run: .\ops\finalize-run.ps1
 
       - name: Sync dependencies
         shell: powershell
@@ -135,4 +137,4 @@ jobs:
       # - name: Post-run cleanup
       #   if: always()
       #   shell: powershell
-      #   run: .\scripts\finalize-run.ps1
+      #   run: .\ops\finalize-run.ps1
