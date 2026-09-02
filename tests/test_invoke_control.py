@@ -71,6 +71,31 @@ class InvokeControlTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("no match", err)
 
+    def test_optional_no_match_succeeds(self):
+        code, out, err = _run(["123", "--name", "Missing", "--optional"], [])
+
+        self.assertEqual(code, 0)
+        self.assertIn("no match; skipping", out)
+        self.assertEqual(err, "")
+
+    def test_retries_until_control_appears(self):
+        control = _control("Reload projects", "", "Button")
+        out = io.StringIO()
+        with mock.patch.object(
+                sys, "argv",
+                ["invoke_control.py", "123", "--name", "Reload projects",
+                 "--timeout-ms", "100", "--poll-ms", "0"]), \
+                mock.patch.object(invoke_control, "Application") as application, \
+                contextlib.redirect_stdout(out):
+            descendants = application.return_value.connect.return_value.window \
+                .return_value.descendants
+            descendants.side_effect = [[], [control]]
+            invoke_control.main()
+
+        self.assertEqual(descendants.call_count, 2)
+        control.invoke.assert_called_once_with()
+        self.assertIn("invoked\tReload projects", out.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
